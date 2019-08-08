@@ -1,0 +1,27 @@
+program MJProgram
+	int x, y;
+	const bool  falseConst = false, trueConst = true;
+	bool z;
+	const char a = '4', b = 'a', c = '-';
+{
+	int k() 
+		int c; 
+		char r;
+	{
+		c = 2;
+		r = 'a';
+		return c + 2;
+	}
+	
+	void main() {
+		print(1);
+		x = 5 + (6 * 6) % 6;
+		z = trueConst;
+		z = falseConst;
+		print(2);		
+		x = k();
+		k();
+		
+		return;
+	}
+}
