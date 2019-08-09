@@ -3,25 +3,35 @@ program MJProgram
 	const bool  falseConst = false, trueConst = true;
 	bool z;
 	const char a = '4', b = 'a', c = '-';
-{
-	int k() 
+	enum Proba { JEDAN = 6, DVA };
+	enum Proba2 { TRI };
+	int niz[];
+{	
+	int k(int g, int j) 
 		int c; 
 		char r;
 	{
-		c = 2;
-		r = 'a';
+	//	c = 2;
+	//	r = 'a';
 		return c + 2;
+	}
+	
+	bool func() {
+		return true;
 	}
 	
 	void main() {
 		print(1);
-		x = 5 + (6 * 6) % 6;
-		z = trueConst;
-		z = falseConst;
+		x = 33;
+		niz = new int[Proba.JEDAN];
+	//	x = 5 + (6 * 6) % 6;
+	//	z = trueConst;
+	//	z = falseConst;
 		print(2);		
-		x = k();
-		k();
-		
+	//	x = k(x, 2 + 6);
+		func();
+		//a = '5';
+		x = Proba.JEDAN;
 		return;
 	}
 }

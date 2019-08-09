@@ -3,6 +3,11 @@ package rs.ac.bg.etf.pp1;
 import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.*;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Dictionary;
+import java.util.HashMap;
+
 import org.apache.log4j.Logger;
 
 import rs.ac.bg.etf.pp1.ast.*;
@@ -10,9 +15,11 @@ import rs.ac.bg.etf.pp1.ast.*;
 public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public static final Struct boolType = new Struct(Struct.Bool);
+	public static final Struct enumType = new Struct(Struct.Int);
 	
 	Logger log = Logger.getLogger(getClass());
-	Obj currentMethod = null;
+
+	Obj currentEnum = null;
 	boolean returnFound = false;
 	boolean errorDetected = false;
 	int nVars;
@@ -33,6 +40,9 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			msg.append (" na liniji ").append(line);
 		log.info(msg.toString());
 	}
+	
+//	
+	
 	
 	public void visit(ProgName progName) {
 		Tab.insert(Obj.Type, "bool", boolType);
@@ -67,7 +77,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				report_error("Greska na liniji " + numConstDecl.getLine() + " nekompatibilni tip konstante i inicijalizator!", null);
 			}
 			else {
-				Tab.insert(Obj.Con, numConstDecl.getConstName(), constDeclsType.struct);
+				Obj constNode = Tab.find(numConstDecl.getConstName());
+				if (constNode == Tab.noObj) {
+					constNode = Tab.insert(Obj.Con, numConstDecl.getConstName(), constDeclsType.struct);
+				}
+				else {
+					report_info("Greska na liniji " + numConstDecl.getLine() + " : identifikator " + numConstDecl.getConstName() + " je vec deklarisan u okruzujucem opsegu!", null);
+				}
 			}
 		}
 	}
@@ -81,7 +97,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				report_error("Greska na liniji " + charConstDecl.getLine() + " nekompatibilni tip konstante i inicijalizator!", null);
 			}
 			else {
-				Tab.insert(Obj.Con, charConstDecl.getConstName(), constDeclsType.struct);
+				Obj constNode = Tab.find(charConstDecl.getConstName());
+				if (constNode == Tab.noObj)
+				{
+					Tab.insert(Obj.Con, charConstDecl.getConstName(), constDeclsType.struct);
+				}
+				else {
+					report_info("Greska na liniji " + charConstDecl.getLine() + " : identifikator " + charConstDecl.getConstName() + " je vec deklarisan u okruzujucem opsegu!", null);
+				}
 			}
 		}
 	}
@@ -95,7 +118,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				report_error("Greska na liniji " + boolConstDecl.getLine() + " nekompatibilni tip konstante i inicijalizator!", null);
 			}
 			else {
-				Tab.insert(Obj.Con, boolConstDecl.getConstName(), constDeclsType.struct);
+				Obj constNode = Tab.find(boolConstDecl.getConstName());
+				if (constNode == Tab.noObj) {
+					Tab.insert(Obj.Con, boolConstDecl.getConstName(), constDeclsType.struct);
+				}
+				else {
+					report_info("Greska na liniji " + boolConstDecl.getLine() + " : identifikator " + boolConstDecl.getConstName() + " je vec deklarisan u okruzujucem opsegu!", null);
+				}
 			}
 		}
 	}
@@ -111,14 +140,27 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	public void visit(SingleVarDecl singleVarDecl) {
-		
-		report_info("Deklarisana promenljiva " + singleVarDecl.getVarName(), singleVarDecl);
-		Obj varNode = Tab.insert(Obj.Var, singleVarDecl.getVarName(), varDeclsType.struct);
+		Obj varNode = findObjInCurrentScope(singleVarDecl.getVarName());
+		if (varNode == Tab.noObj) 
+		{
+			report_info("Deklarisana promenljiva " + singleVarDecl.getVarName(), singleVarDecl);
+			varNode = Tab.insert(Obj.Var, singleVarDecl.getVarName(), varDeclsType.struct);
+		}
+		else {
+			report_info("Greska na liniji " + singleVarDecl.getLine() + " : identifikator " + singleVarDecl.getVarName() + " je vec deklarisan u okruzujucem opsegu!", null);	
+		}
 	}
 	
 	public void visit(VarDeclArray varDeclArray) { 
-		report_info("Deklarisana promenljiva " + varDeclArray.getVarName(), varDeclArray);
-		Obj varNode = Tab.insert(Obj.Var, varDeclArray.getVarName(), new Struct(Struct.Array, varDeclsType.struct));
+		Obj varNode = findObjInCurrentScope(varDeclArray.getVarName());
+		if (varNode == Tab.noObj) 
+		{
+			report_info("Deklarisana promenljiva " + varDeclArray.getVarName(), varDeclArray);
+			varNode = Tab.insert(Obj.Var, varDeclArray.getVarName(), new Struct(Struct.Array, varDeclsType.struct));
+		}
+		else {
+			report_info("Greska na liniji " + varDeclArray.getLine() + " : identifikator " + varDeclArray.getVarName() + " je vec deklarisan u okruzujucem opsegu!", null);
+		}
 	}
 	
 	public void visit(Type type) {
@@ -140,19 +182,86 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	//===========================ENUM DECLARATIONS=================================
 	
+	public void visit(EnumName enumName) {
+		Obj defined = Tab.find(enumName.getEnumName());
+		if (defined != Tab.noObj) {
+			report_error("Greska na liniji " + enumName.getLine() + " : Identifikator " + enumName.getEnumName() + " je vec definisan u okruzujucem scope-u!", null);
+		}
+		else  {
+			currentEnum = Tab.insert(Obj.Elem, enumName.getEnumName() , enumType);
+			enumName.obj = currentEnum;
+			Tab.openScope();
+		}
+	}
+	
+	public void visit(EnumDeclaration enumDeclaration) {
+		if (currentEnum != null) {
+			Tab.chainLocalSymbols(enumDeclaration.getEnumName().obj);
+			Tab.closeScope();
+		}
+		currentEnum = null;
+	}
+	
+	public void visit(SingleEnumDecl singleEnumDecl) {
+		if (currentEnum == null) {
+			report_error("Greska na liniji " + singleEnumDecl.getLine() + " : Enum literal ne moze biti definisan izvan enuma!", null);
+		}
+		
+		Obj enumLiteral = Tab.find(singleEnumDecl.getLiteralName());
+		if (enumLiteral != Tab.noObj) {
+			report_error("Greska na liniji " + singleEnumDecl.getLine() + " : Enum literal " + singleEnumDecl.getLiteralName() + " je vec definisan u enumu " + currentEnum.getName() + "!", null);
+		}
+		
+		Tab.insert(Obj.Elem, singleEnumDecl.getLiteralName(), Tab.intType);
+	}
+	
+	public void visit(EnumDeclEqual enumDeclEqual) {
+		if (currentEnum == null) {
+			report_error("Greska na liniji " + enumDeclEqual.getLine() + " : Enum literal ne moze biti definisan izvan enuma!", null);
+		}
+		else  {
+			Obj enumLiteral = Tab.find(enumDeclEqual.getLiteralName());
+			if (enumLiteral != Tab.noObj) {
+				report_error("Greska na liniji " + enumDeclEqual.getLine() + " : Enum literal " + enumDeclEqual.getLiteralName() + " je vec definisan u enumu " + currentEnum.getName() + "!", null);
+			}
+			
+			Tab.insert(Obj.Elem, enumDeclEqual.getLiteralName(), Tab.intType);
+		}
+	}
+	
 	//==========================OBRADA FUNKCIJA=======================================
+	
+	HashMap<String, ArrayList<Obj>> methodFormalPars = new HashMap<>();
+	Obj currentMethod = null;
+	Obj currentMethodCall = null;
+	int actParamNo = 0;
+	
 	public void visit(MethodVoidTypeName methodVoidTypeName) {
-		currentMethod = Tab.insert(Obj.Meth,  methodVoidTypeName.getMethName(), Tab.noType);
-		methodVoidTypeName.obj = currentMethod;
-		Tab.openScope();
-		report_info("Obradjuje se funkcija " + methodVoidTypeName.getMethName(), methodVoidTypeName);
+		Obj obj = Tab.find(methodVoidTypeName.getMethName());
+		if (obj != Tab.noObj) {
+			report_error("Greska na liniji " + methodVoidTypeName.getLine() + " : ime " + methodVoidTypeName.getMethName() + " je vec deklarisano!", null);
+		}
+		else {
+			currentMethod = Tab.insert(Obj.Meth,  methodVoidTypeName.getMethName(), Tab.noType);
+			methodVoidTypeName.obj = currentMethod;
+			Tab.openScope();
+			report_info("Obradjuje se funkcija " + methodVoidTypeName.getMethName(), methodVoidTypeName);
+			methodFormalPars.put(methodVoidTypeName.getMethName(), new ArrayList<Obj>());
+		}
 	}
 	
 	public void visit(MethodNoVoidTypeName methodNoVoidTypeName) {
-		currentMethod = Tab.insert(Obj.Meth,  methodNoVoidTypeName.getMethName(), methodNoVoidTypeName.getType().struct);
-		methodNoVoidTypeName.obj = currentMethod;
-		Tab.openScope();
-		report_info("Obradjuje se funkcija " + methodNoVoidTypeName.getMethName(), methodNoVoidTypeName);
+		Obj obj = Tab.find(methodNoVoidTypeName.getMethName());
+		if (obj != Tab.noObj) {
+			report_error("Greska na liniji " + methodNoVoidTypeName.getLine() + " : ime " + methodNoVoidTypeName.getMethName() + " je vec deklarisano!", null);
+		}
+		else {
+			currentMethod = Tab.insert(Obj.Meth,  methodNoVoidTypeName.getMethName(), methodNoVoidTypeName.getType().struct);
+			methodNoVoidTypeName.obj = currentMethod;
+			Tab.openScope();
+			report_info("Obradjuje se funkcija " + methodNoVoidTypeName.getMethName(), methodNoVoidTypeName);
+			methodFormalPars.put(methodNoVoidTypeName.getMethName(), new ArrayList<Obj>());
+		}
 	}
 	
 	public void visit(MethodDecl methodDecl) {
@@ -166,14 +275,130 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		currentMethod = null;
 	}
 	
+	public void visit(FuncName funcName) {
+		actParamNo = 0;
+		currentMethodCall = Tab.find(funcName.getDesignator().obj.getName());
+	}
+	
+	public void visit(FuncCall funcCall) {
+		Obj func = funcCall.getFuncName().getDesignator().obj;
+		if (Obj.Meth == func.getKind()) {
+			report_info("Pronadjen poziv funkcije " + funcCall.getLine() + " na liniji " + funcCall.getLine(), null);
+			funcCall.struct = func.getType();
+			
+			if (currentMethodCall != null) {
+				if (methodFormalPars.get(currentMethodCall.getName()).size() != actParamNo) {
+					report_error("Greska na liniji " + funcCall.getLine() + " nije prosledjen dovoljan broj argumenata pozivu funkcije!", null);
+				}
+			}
+			
+			currentMethodCall = null;
+			actParamNo = 0;
+		} 
+		else {
+			//TODO: Dobijes noObj kao ime funkcije kada funkcija nije deklarisana
+			report_error("Greska na liniji " + funcCall.getLine() + " : ime " + func.getName() + " nije funkcija!", null);
+			funcCall.struct = Tab.noType;
+		}
+	}
+	
+	public void visit(ProcCall procCall) {
+		Obj func = procCall.getFuncName().getDesignator().obj;
+		if (Obj.Meth == func.getKind()) {
+			report_info("Pronadjen poziv procedure " + procCall.getLine() + " na liniji " + procCall.getLine(), null);
+			procCall.struct = func.getType();
+			
+			if (currentMethodCall != null) {
+				if (methodFormalPars.get(currentMethodCall.getName()).size() != actParamNo) {
+					report_error("Greska na liniji " + procCall.getLine() + " nije prosledjen dovoljan broj argumenata pozivu metode!", null);
+				}
+			}
+		} 
+		else {
+			//TODO: Dobijes noObj kao ime funkcije kada funkcija nije deklarisana
+			report_error("Greska na liniji " + procCall.getLine() + " : ime " + procCall.getFuncName().getDesignator().obj.getName() + " nije funkcija!", null);
+			procCall.struct = Tab.noType;
+		}
+	}
+	
+	public void visit(ParamDecl paramDecl) {
+		Obj obj = Tab.insert(Obj.Var, paramDecl.getName(), paramDecl.getType().struct);
+		if (obj == Tab.noObj) {
+			report_error("Greska na liniji " + paramDecl.getLine() + " : identifikator " + paramDecl.getName() + " je vec deklarisan u okruzujucem opsegu!", null);
+		}
+		else {
+			methodFormalPars.get(currentMethod.getName()).add(obj);
+		}
+	}
+	
+	public void visit(ArrayParamDecl arrayParamDecl) {
+		Obj obj = Tab.insert(Obj.Var, arrayParamDecl.getName(), arrayParamDecl.getType().struct);
+		if (obj == Tab.noObj) {
+			report_error("Greska na liniji " + arrayParamDecl.getLine() + " : identifikator " + arrayParamDecl.getName() + " je vec deklarisan u okruzujucem opsegu!", null);
+		}
+		else {
+			methodFormalPars.get(currentMethod.getName()).add(obj);
+		}
+	}
+	
+	public void visit(ActualParams actualParams) {
+		if (currentMethodCall == null) {
+			return;
+		}
+		
+		ArrayList<Obj> pars = methodFormalPars.get(currentMethodCall.getName());
+		
+		if (actParamNo == pars.size()) {
+			report_error("Greska na liniji " + actualParams.getLine() + " : Pozivu funkcije je prosledjeno vise paramatera od potrebnog broja!", null);
+			return;
+		}
+		
+		Obj par = pars.get(actParamNo++);
+		if (!par.getType().compatibleWith(actualParams.getExpr().struct)) {
+			report_error("Greska na liniji " + actualParams.getLine() + " : Tip prosledjenog parametra nije kompatibilan sa tipom parametra funkcije!", null);
+		}
+	}
+	
+	public void visit(ActualParam actualParam) {
+		if (currentMethodCall == null) {
+			return;
+		}
+		
+		ArrayList<Obj> pars = methodFormalPars.get(currentMethodCall.getName());
+		
+		if (actParamNo == pars.size()) {
+			report_error("Greska na liniji " + actualParam.getLine() + " : Pozivu funkcije je prosledjeno vise paramatera od potrebnog broja!", null);
+			return;
+		}
+		
+		Obj par = pars.get(actParamNo++);
+		if (!par.getType().compatibleWith(actualParam.getExpr().struct)) {
+			report_error("Greska na liniji " + actualParam.getLine() + " : Tip prosledjenog parametra nije kompatibilan sa tipom parametra funkcije!", null);
+		}
+	}
+	
+	public void visit(NoActuals noActuals) {
+		if (currentMethodCall == null) {
+			return;
+		}
+		
+		if (methodFormalPars.get(currentMethodCall.getName()).size() != 0) {
+			report_error("Greska na liniji " + noActuals.getLine() + " : metoda " + currentMethodCall.getName() + " zahteva parametre!", null);
+		}
+	}
+	
+	
+	
 	//=============================Obrada designatora=============================================
 	public void visit (IdentDesign designator) {
 		Obj obj = Tab.find(designator.getName());
 		if (obj == Tab.noObj) {
 			report_error("Greska na liniji " + designator.getLine() + " : ime " + designator.getName() + " nije deklarisano!", null);
+			designator.obj = new Obj(Obj.Meth, designator.getName(), Tab.noType);
 		}
-		
-		designator.obj = obj;
+		else {
+			designator.obj = obj;
+		}
 	}
 	
 	public void visit (SubIdendDesign designator) {
@@ -182,6 +407,22 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			report_error("Greska na liniji " + designator.getLine() + " : ime " + designator.getName() + " nije deklarisano!", null);
 		}
 		
+		if (!obj.getType().equals(enumType)) {
+			report_error("Greska na liniji " + designator.getLine() + " : ime " + designator.getName() + " nije izraz enumeracije!", null);
+		}
+		
+		Collection<Obj> locals = obj.getLocalSymbols();
+		Obj enumerator = null;
+		for(Obj local: locals) {
+			if (local.getName().equals(designator.getSubName())) {
+				enumerator = local;
+				break;
+			}
+		}
+	
+		if (enumerator == null) {
+			report_error("Greska na liniji " + designator.getLine() + " : enumerator " + designator.getSubName() + " nije deklarisan!", null);
+		}
 		designator.obj = obj;
 	}
 	
@@ -192,33 +433,33 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 		
 		designator.obj = obj;
+		
+		if (!designator.getExpr().struct.compatibleWith(Tab.intType)) {
+			report_error("Greska na liniji " + designator.getLine() + " : nekompatibilan tip u izrazu za indeksiranje!", null);
+		}
 	}
+		
 	
-	public void visit(FuncCall funcCall) {
-		Obj func = funcCall.getDesignator().obj;
-		if (Obj.Meth == func.getKind()) {
-			report_info("Pronadjen poziv funkcije " + funcCall.getLine() + " na liniji " + funcCall.getLine(), null);
-			funcCall.struct = func.getType();
-		} 
-		else {
-			report_error("Greska na liniji " + funcCall.getLine() + " : ime " + func.getName() + " nije funkcija!", null);
-			funcCall.struct = Tab.noType;
+	public void visit(Increment increment) {
+		Obj obj = Tab.find(increment.getDesignator().obj.getName());
+		if (obj == Tab.noObj) {
+			report_error("Greska na liniji " + increment.getLine() + " : Promenljiva " + increment.getDesignator().obj.getName() + " nije deklarisana!", null);
+		}
+		else if (!obj.getType().equals(Tab.intType)) {
+			report_error("Greska na liniji " + increment.getLine() + " : Nekompatibilni tipovi!", null);
 		}
 	}
 	
-	public void visit(ProcCall procCall) {
-		Obj func = procCall.getDesignator().obj;
-		if (Obj.Meth == func.getKind()) {
-			report_info("Pronadjen poziv procedure " + procCall.getLine() + " na liniji " + procCall.getLine(), null);
-			procCall.struct = func.getType();
-		} 
-		else {
-			report_error("Greska na liniji " + procCall.getLine() + " : ime " + func.getName() + " nije funkcija!", null);
-			procCall.struct = Tab.noType;
+	public void visit(Decrement decrement) {
+		Obj obj = Tab.find(decrement.getDesignator().obj.getName());
+		if (obj == Tab.noObj) {
+			report_error("Greska na liniji " + decrement.getLine() + " : Promenljiva " + decrement.getDesignator().obj.getName() + " nije deklarisana!", null);
+		}
+		else if (!obj.getType().equals(Tab.intType)) {
+			report_error("Greska na liniji " + decrement.getLine() + " : Nekompatibilni tipovi!", null);
 		}
 	}
 	
-
 	
 	public void visit(FactorTerm factorTerm) {
 		factorTerm.struct = factorTerm.getFactor().struct;
@@ -252,6 +493,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 	}
 	
+	
 	public void visit(ReturnStmt returnStmt) {
 		returnFound = true;
 		Struct currMethType = currentMethod.getType();
@@ -268,6 +510,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		negExpr.struct = negExpr.getSignedExpr().struct;
 	}
 	
+	
 	public void visit(NumConstFact numConstFact) {
 		numConstFact.struct = Tab.intType;
 	}
@@ -280,13 +523,39 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		boolConstFact.struct = boolType;
 	}
 	
+	public void visit(NewExprFact newExprFact) {
+		if (!newExprFact.getExpr().struct.assignableTo(Tab.intType) && !enumAssignable(Tab.intType, newExprFact.getExpr().struct)) {
+			report_error("Greska na liniji " + newExprFact.getLine() + " : Izraz u naredbi kreiranja niza mora da bude tipa int!", null);
+			newExprFact.struct = Tab.noType;
+		}
+		else {
+			newExprFact.struct = new Struct(Struct.Array, newExprFact.getType().struct);
+		}
+	}
+	
+	public void visit(NewFact newFact) {
+		newFact.struct = newFact.getType().struct;	
+	}
+	
 	public void visit(Var var) {
+		Obj obj = Tab.find(var.getDesignator().obj.getName());
+		if (obj == Tab.noObj) {
+			report_error("Greska na liniji " + var.getLine() + " : Promenljiva " + var.getDesignator().obj.getName() + " nije definisana!", null);
+		}
+		
 		var.struct = var.getDesignator().obj.getType();
 	}
 	
 	public void visit(Assignment assignment) {
-		if (!assignment.getExpr().struct.assignableTo(assignment.getDesignator().obj.getType())) {
-			report_error("Greska na liniji " + assignment.getLine() + " : " + "nekomaptibilni tipovi u dodeli vrednosti!", null);
+		
+		if (assignment.getDesignator().obj.getKind() == Obj.Con) {
+			report_error("Greska na liniji " + assignment.getLine() + " : Vrednost konstanti se ne moze menjati!", null);
+		}
+		
+		if (!assignment.getExpr().struct.assignableTo(assignment.getDesignator().obj.getType()) 
+				&& !enumAssignable(assignment.getDesignator().obj.getType(), assignment.getExpr().struct)
+		) {
+			report_error("Greska na liniji " + assignment.getLine() + " : " + "Nekomaptibilni tipovi u dodeli vrednosti!", null);
 		}
 	}
 	
@@ -294,11 +563,28 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		exprFact.struct = exprFact.getExpr().struct;
 	}
 	
-//	public void visit(BoolConstFact boolConstFact) {
-//		boolConstFact = Tab.
-//	}
+	
 	
 	public boolean passed() {
 		return !errorDetected;
+	}
+	
+	private boolean enumAssignable(Struct dest, Struct src) {
+		return dest.equals(Tab.intType) 
+				&& src.equals(enumType);
+	}
+	
+	private Obj findObjInCurrentScope(String name) {
+		Scope s = Tab.currentScope();
+		if (s == null) {
+			return Tab.noObj;
+		}
+		
+		if (s.getLocals() == null) {
+			return Tab.noObj;
+		}
+		
+		Obj obj = s.getLocals().searchKey(name);
+		return obj != null ? obj : Tab.noObj;
 	}
 }

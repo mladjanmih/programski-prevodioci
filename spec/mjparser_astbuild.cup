@@ -50,15 +50,13 @@ scan with {:
 
 terminal READ, PRINT, NEW, RETURN, INC, DEC, EQUAL, PLUS, MINUS, DIV, MUL, MOD;
 terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, CHAR;
-terminal PROG, ENUM, CONST, SEMI, COMMA, DOT, VOID, BOOL;
+terminal PROG, CONST, SEMI, COMMA, DOT, VOID, BOOL, ENUM;
 terminal String IDENT;
 terminal Integer NUMBER;
-
 
 nonterminal Statement Statement;
 nonterminal  Addop Addop;
 nonterminal Mulop Mulop;
-nonterminal PrintList PrintList;
 nonterminal VarType VarType;
 nonterminal ConstType ConstType;
 nonterminal DeclarationList DeclarationList;
@@ -79,7 +77,7 @@ nonterminal FormalParamDecl FormalParamDecl;
 nonterminal ActualPars ActualPars;
 nonterminal ActualParamList ActualParamList;
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor;
 
 
@@ -93,11 +91,14 @@ DeclarationList ::= (ProgDeclList) DeclarationList:D1 Declaration:D2 {: RESULT=n
 				;
 
 ConstType ::= (ConstType) Type:typeName {: RESULT=new ConstType(typeName); RESULT.setLine(typeNameleft); :};
+
+EnumName ::= (EnumName) IDENT:enumName {: RESULT=new EnumName(enumName); RESULT.setLine(enumNameleft); :};
+
 Declaration ::= (ConstDeclaration) CONST ConstType:constType ConstDeclList:C1 SEMI {: RESULT=new ConstDeclaration(constType, C1); RESULT.setLine(constTypeleft); :}
 			|
 			(VarDeclaration) VarDeclTypeList:V1 {: RESULT=new VarDeclaration(V1); RESULT.setLine(V1left); :} 
 			|
-			(EnumDeclaration) ENUM:enumName LBRACE EnumDeclList:E1 RBRACE SEMI {: RESULT=new EnumDeclaration(E1); RESULT.setLine(E1left); :}
+			(EnumDeclaration) ENUM EnumName:enumName LBRACE EnumDeclList:E1 RBRACE SEMI {: RESULT=new EnumDeclaration(enumName, E1); RESULT.setLine(enumNameleft); :}
 			;
 
 ListVarDeclTypeList ::= (ListVarDeclTypeLists) ListVarDeclTypeList:L1 VarDeclTypeList:V2 {: RESULT=new ListVarDeclTypeLists(L1, V2); RESULT.setLine(L1left); :}
@@ -124,9 +125,9 @@ EnumDeclList ::= (EnumDeclarations) EnumDeclList:E1 COMMA EnumDecl:E2 {: RESULT=
 			(SingleEnumDeclarations) EnumDecl:E1 {: RESULT=new SingleEnumDeclarations(E1); RESULT.setLine(E1left); :}
 			;
 
-EnumDecl ::= (SingleEnumDecl) IDENT:enumName {: RESULT=new SingleEnumDecl(enumName); RESULT.setLine(enumNameleft); :}
+EnumDecl ::= (SingleEnumDecl) IDENT:literalName {: RESULT=new SingleEnumDecl(literalName); RESULT.setLine(literalNameleft); :}
 			|
-			(EnumDeclEqual) IDENT:enumName EQUAL NUMBER:N1 {: RESULT=new EnumDeclEqual(enumName, N1); RESULT.setLine(enumNameleft); :}
+			(EnumDeclEqual) IDENT:literalName EQUAL NUMBER:N1 {: RESULT=new EnumDeclEqual(literalName, N1); RESULT.setLine(literalNameleft); :}
 			;
 
 ConstDeclList ::= (ConstDeclarations) ConstDeclList:C1 COMMA ConstDecl:C2 {: RESULT=new ConstDeclarations(C1, C2); RESULT.setLine(C1left); :}
@@ -156,9 +157,9 @@ FormalParamList ::= (FormalParamDecls) FormalParamList:F1 COMMA FormalParamDecl:
 				(SingleFormalParamDecl) FormalParamDecl:F1 {: RESULT=new SingleFormalParamDecl(F1); RESULT.setLine(F1left); :}
 				;
 
-FormalParamDecl ::= (ParamDecl) Type:T1 IDENT:paramType {: RESULT=new ParamDecl(T1, paramType); RESULT.setLine(T1left); :}
+FormalParamDecl ::= (ParamDecl) Type:type IDENT:name {: RESULT=new ParamDecl(type, name); RESULT.setLine(typeleft); :}
 					|
-					(ArrayParamDecl) Type:T1 IDENT:paramType LBRACKET RBRACKET {: RESULT=new ArrayParamDecl(T1, paramType); RESULT.setLine(T1left); :}
+					(ArrayParamDecl) Type:type IDENT:name LBRACKET RBRACKET {: RESULT=new ArrayParamDecl(type, name); RESULT.setLine(typeleft); :}
 					;
 					
 ConstDecl ::= (NumConstDecl) IDENT:constName EQUAL NUMBER:N1 {: RESULT=new NumConstDecl(constName, N1); RESULT.setLine(constNameleft); :}
@@ -177,25 +178,22 @@ Statement ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new Designa
 			| 
 			(ReadStmt) READ LPAREN Designator:D1 RPAREN SEMI {: RESULT=new ReadStmt(D1); RESULT.setLine(D1left); :}
 			| 
-			(PrintStmt) PRINT LPAREN Expr:E1 PrintList:P2 RPAREN SEMI {: RESULT=new PrintStmt(E1, P2); RESULT.setLine(E1left); :}
+			(PrintStmt) PRINT LPAREN Expr:E1 RPAREN SEMI {: RESULT=new PrintStmt(E1); RESULT.setLine(E1left); :}
+			|
+			(PrintNumStmt) PRINT LPAREN Expr:E1 COMMA NUMBER:N2 RPAREN SEMI {: RESULT=new PrintNumStmt(E1, N2); RESULT.setLine(E1left); :}
 			|
 			(ReturnStmt) RETURN Expr:e SEMI {: RESULT=new ReturnStmt(e); RESULT.setLine(eleft); :}
 			|
 			(ReturnNoExpr) RETURN SEMI {: RESULT=new ReturnNoExpr(); :}
 			;
-	
-PrintList ::= (PrintNumber) COMMA NUMBER:N1 {: RESULT=new PrintNumber(N1); RESULT.setLine(N1left); :}
-			|
-			(NoPrintNumber) {: RESULT=new NoPrintNumber(); :} /* epsilon */
-			;
-			
+
 DesignatorStatement ::= (Assignment) Designator:dest EQUAL Expr:e {: RESULT=new Assignment(dest, e); RESULT.setLine(destleft); :}
 					|
 					(Increment) Designator:dest INC {: RESULT=new Increment(dest); RESULT.setLine(destleft); :}
 					|
 					(Decrement) Designator:dest DEC {: RESULT=new Decrement(dest); RESULT.setLine(destleft); :}
 					|
-					(ProcCall) Designator:d LPAREN ActualPars:A1 RPAREN {: RESULT=new ProcCall(d, A1); RESULT.setLine(dleft); :}
+					(ProcCall) FuncName:name LPAREN ActualPars:A1 RPAREN {: RESULT=new ProcCall(name, A1); RESULT.setLine(nameleft); :}
 					;
 
 Expr ::= (NegExpr) MINUS SignedExpr:e {: RESULT=new NegExpr(e); RESULT.setLine(eleft); :}
@@ -212,7 +210,9 @@ Term ::= (MulopTerm) Term:t Mulop:M1 Factor:f {: RESULT=new MulopTerm(t, M1, f);
 		|
 		(FactorTerm) Factor:f {: RESULT=new FactorTerm(f); RESULT.setLine(fleft); :}
 		;
-		
+
+FuncName ::= (FuncName) Designator:d {: RESULT=new FuncName(d); RESULT.setLine(dleft); :};
+
 Factor ::= (NumConstFact) NUMBER:N1 {: RESULT=new NumConstFact(N1); RESULT.setLine(N1left); :} 
 			|
 			(CharConstFact) CHAR {: RESULT=new CharConstFact(); :}
@@ -227,7 +227,7 @@ Factor ::= (NumConstFact) NUMBER:N1 {: RESULT=new NumConstFact(N1); RESULT.setLi
 			|
 			(Var) Designator:d {: RESULT=new Var(d); RESULT.setLine(dleft); :}
 			|
-			(FuncCall) Designator:d LPAREN ActualPars:A1 RPAREN {: RESULT=new FuncCall(d, A1); RESULT.setLine(dleft); :} 
+			(FuncCall) FuncName:name LPAREN ActualPars:A1 RPAREN {: RESULT=new FuncCall(name, A1); RESULT.setLine(nameleft); :} 
 			;
 			
 ActualPars ::= (Actuals) ActualParamList:A1 {: RESULT=new Actuals(A1); RESULT.setLine(A1left); :}
@@ -251,7 +251,7 @@ Mulop ::= (MulMulop) MUL {: RESULT=new MulMulop(); :}
 		| 
 		(ModMulop) MOD {: RESULT=new ModMulop(); :}
 		;
-		
+
 Designator ::= (IdentDesign) IDENT:name {: RESULT=new IdentDesign(name); RESULT.setLine(nameleft); :}
 			|
 			(SubIdendDesign) IDENT:name DOT IDENT:subName {: RESULT=new SubIdendDesign(name, subName); RESULT.setLine(nameleft); :}

@@ -50,17 +50,16 @@ scan with {:
 
 terminal READ, PRINT, NEW, RETURN, INC, DEC, EQUAL, PLUS, MINUS, DIV, MUL, MOD;
 terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, CHAR;
-terminal PROG, ENUM, CONST, SEMI, COMMA, DOT, VOID, BOOL;
+terminal PROG, CONST, SEMI, COMMA, DOT, VOID, BOOL, ENUM;
 terminal String IDENT;
 terminal Integer NUMBER;
 
-
-nonterminal Statement,  Addop, Mulop, PrintList, VarType, ConstType;
+nonterminal Statement,  Addop, Mulop, VarType, ConstType;
 nonterminal DeclarationList, Declaration, ListVarDeclTypeList, VarDeclTypeList, VarDeclList, MethodDeclList;
 nonterminal ConstDeclList, EnumDeclList, VarDecl, EnumDecl, ConstDecl, StatementList, FormalParamList, FormPars, FormalParamDecl;
 nonterminal ActualPars, ActualParamList;
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor;
 
 
@@ -74,11 +73,14 @@ DeclarationList ::= (ProgDeclList) DeclarationList Declaration
 				;
 
 ConstType ::= (ConstType) Type:typeName;
+
+EnumName ::= (EnumName) IDENT:enumName;
+
 Declaration ::= (ConstDeclaration) CONST ConstType:constType ConstDeclList SEMI
 			|
 			(VarDeclaration) VarDeclTypeList 
 			|
-			(EnumDeclaration) ENUM:enumName LBRACE EnumDeclList RBRACE SEMI
+			(EnumDeclaration) ENUM EnumName:enumName LBRACE EnumDeclList RBRACE SEMI
 			;
 
 ListVarDeclTypeList ::= (ListVarDeclTypeLists) ListVarDeclTypeList VarDeclTypeList
@@ -105,9 +107,9 @@ EnumDeclList ::= (EnumDeclarations) EnumDeclList COMMA EnumDecl
 			(SingleEnumDeclarations) EnumDecl
 			;
 
-EnumDecl ::= (SingleEnumDecl) IDENT:enumName
+EnumDecl ::= (SingleEnumDecl) IDENT:literalName
 			|
-			(EnumDeclEqual) IDENT:enumName EQUAL NUMBER
+			(EnumDeclEqual) IDENT:literalName EQUAL NUMBER
 			;
 
 ConstDeclList ::= (ConstDeclarations) ConstDeclList COMMA ConstDecl
@@ -137,9 +139,9 @@ FormalParamList ::= (FormalParamDecls) FormalParamList COMMA FormalParamDecl
 				(SingleFormalParamDecl) FormalParamDecl
 				;
 
-FormalParamDecl ::= (ParamDecl) Type IDENT:paramType
+FormalParamDecl ::= (ParamDecl) Type:type IDENT:name
 					|
-					(ArrayParamDecl) Type IDENT:paramType LBRACKET RBRACKET
+					(ArrayParamDecl) Type:type IDENT:name LBRACKET RBRACKET
 					;
 					
 ConstDecl ::= (NumConstDecl) IDENT:constName EQUAL NUMBER
@@ -158,25 +160,22 @@ Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			| 
 			(ReadStmt) READ LPAREN Designator RPAREN SEMI
 			| 
-			(PrintStmt) PRINT LPAREN Expr PrintList RPAREN SEMI
+			(PrintStmt) PRINT LPAREN Expr RPAREN SEMI
+			|
+			(PrintNumStmt) PRINT LPAREN Expr COMMA NUMBER RPAREN SEMI
 			|
 			(ReturnStmt) RETURN Expr:e SEMI
 			|
 			(ReturnNoExpr) RETURN SEMI
 			;
-	
-PrintList ::= (PrintNumber) COMMA NUMBER
-			|
-			(NoPrintNumber) /* epsilon */
-			;
-			
+
 DesignatorStatement ::= (Assignment) Designator:dest EQUAL Expr:e
 					|
 					(Increment) Designator:dest INC
 					|
 					(Decrement) Designator:dest DEC
 					|
-					(ProcCall) Designator:d LPAREN ActualPars RPAREN
+					(ProcCall) FuncName:name LPAREN ActualPars RPAREN
 					;
 
 Expr ::= (NegExpr) MINUS SignedExpr:e
@@ -193,7 +192,9 @@ Term ::= (MulopTerm) Term:t Mulop Factor:f
 		|
 		(FactorTerm) Factor:f
 		;
-		
+
+FuncName ::= (FuncName) Designator:d;
+
 Factor ::= (NumConstFact) NUMBER 
 			|
 			(CharConstFact) CHAR
@@ -208,7 +209,7 @@ Factor ::= (NumConstFact) NUMBER
 			|
 			(Var) Designator:d
 			|
-			(FuncCall) Designator:d LPAREN ActualPars RPAREN 
+			(FuncCall) FuncName:name LPAREN ActualPars RPAREN 
 			;
 			
 ActualPars ::= (Actuals) ActualParamList
@@ -232,7 +233,7 @@ Mulop ::= (MulMulop) MUL
 		| 
 		(ModMulop) MOD
 		;
-		
+
 Designator ::= (IdentDesign) IDENT:name
 			|
 			(SubIdendDesign) IDENT:name DOT IDENT:subName
