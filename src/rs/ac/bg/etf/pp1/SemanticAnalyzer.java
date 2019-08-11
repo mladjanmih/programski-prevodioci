@@ -143,10 +143,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		{
 			report_info("Deklarisana promenljiva " + singleVarDecl.getVarName(), singleVarDecl);
 			varNode = Tab.insert(Obj.Var, singleVarDecl.getVarName(), varDeclsType.struct);
+			nVars++;
 		}
 		else {
 			report_info("Greska na liniji " + singleVarDecl.getLine() + " : identifikator " + singleVarDecl.getVarName() + " je vec deklarisan u okruzujucem opsegu!", null);	
 		}
+		
 	}
 	
 	public void visit(VarDeclArray varDeclArray) { 
@@ -155,10 +157,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		{
 			report_info("Deklarisana promenljiva " + varDeclArray.getVarName(), varDeclArray);
 			varNode = Tab.insert(Obj.Var, varDeclArray.getVarName(), new Struct(Struct.Array, varDeclsType.struct));
+			nVars++;
 		}
 		else {
 			report_info("Greska na liniji " + varDeclArray.getLine() + " : identifikator " + varDeclArray.getVarName() + " je vec deklarisan u okruzujucem opsegu!", null);
 		}
+		
 	}
 	
 	public void visit(Type type) {
@@ -505,6 +509,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(FuncCall funcCall) {
 		Obj func = funcCall.getFuncName().getDesignator().obj;
 		if (Obj.Meth == func.getKind()) {
+			
+			if (Tab.noType == func.getType()) {
+				report_error("Greska na liniji " + funcCall.getLine() + " : Funkcija bez povratne vrednosti se ne moze koristiti u izrazima!", null);
+			}
+			
 			report_info("Pronadjen poziv funkcije " + funcCall.getLine() + " na liniji " + funcCall.getLine(), null);
 			funcCall.struct = func.getType();
 			
@@ -619,7 +628,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	public void visit(PrintNumStmt printNumStmt) {
-		
+		Struct t = printNumStmt.getExpr().struct;
+		if (t != Tab.intType && t != Tab.charType) report_error("Greska na liniji " + printNumStmt.getLine() + " : Operant instruckije PRINT mora biti INT ili CHAR tipa!", null); 
+	}
+	
+	public void visit(PrintStmt printStmt) {
+		Struct t = printStmt.getExpr().struct;
+		if (t != Tab.intType && t != Tab.charType) report_error("Greska na liniji " + printStmt.getLine() + " : Operant instruckije PRINT mora biti INT ili CHAR tipa!", null); 
 	}
 	
 	

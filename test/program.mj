@@ -1,45 +1,21 @@
 program MJProgram
 	int x, y;
-	const bool  falseConst = false, trueConst = true;
-	bool z;
-	const char a = '4', b = 'a', c = '-';
-	enum Proba { JEDAN = 6, DVA };
-	enum Proba2 { TRI };
-	int niz[];
-	int niz2[];
-{	
-	int k(int g, int j) 
-		int c; 
-		char r;
-	{
-	//	c = 2;
-	//	r = 'a';
-		return Proba2.TRI;
-	}
-	
-	
-	bool func() {
-		return true;
+{ 	
+	int k() int c; {
+		c = 2;
+		print(0);
+		return c + 2;
 	}
 	
 	void main() {
+		x = 3;
 		print(1);
-	//	x = 33;
-	//	niz = new int[Proba.JEDAN];
-	//	x = 5 + (6 * 6) % Proba.DVA + Proba2.TRI;
-	//	z = trueConst;
-	//	z = falseConst;
-	//	print(Proba.DVA);		
-	//	x = k(Proba2.TRI, 2 + 6);
-		niz2 = niz + niz;
-
-		//falseConst++;
-		niz[7] = x;
-	//	niz['a'] = 5;
-		niz[4] = niz[9];
-	//	func();
-		//a = '5';
-	//	x = Proba.JEDAN;
+		print(x);
+		
+		k();
+		
+		x = x + 3;
+		print(x);
 		return;
 	}
 }
