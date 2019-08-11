@@ -6,6 +6,7 @@ program MJProgram
 	enum Proba { JEDAN = 6, DVA };
 	enum Proba2 { TRI };
 	int niz[];
+	int niz2[];
 {	
 	int k(int g, int j) 
 		int c; 
@@ -13,8 +14,9 @@ program MJProgram
 	{
 	//	c = 2;
 	//	r = 'a';
-		return c + 2;
+		return Proba2.TRI;
 	}
+	
 	
 	bool func() {
 		return true;
@@ -22,16 +24,22 @@ program MJProgram
 	
 	void main() {
 		print(1);
-		x = 33;
-		niz = new int[Proba.JEDAN];
-	//	x = 5 + (6 * 6) % 6;
+	//	x = 33;
+	//	niz = new int[Proba.JEDAN];
+	//	x = 5 + (6 * 6) % Proba.DVA + Proba2.TRI;
 	//	z = trueConst;
 	//	z = falseConst;
-		print(2);		
-	//	x = k(x, 2 + 6);
-		func();
+	//	print(Proba.DVA);		
+	//	x = k(Proba2.TRI, 2 + 6);
+		niz2 = niz + niz;
+
+		//falseConst++;
+		niz[7] = x;
+	//	niz['a'] = 5;
+		niz[4] = niz[9];
+	//	func();
 		//a = '5';
-		x = Proba.JEDAN;
+	//	x = Proba.JEDAN;
 		return;
 	}
 }
