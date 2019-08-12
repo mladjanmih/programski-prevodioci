@@ -156,7 +156,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		if (varNode == Tab.noObj) 
 		{
 			report_info("Deklarisana promenljiva " + varDeclArray.getVarName(), varDeclArray);
-			varNode = Tab.insert(Obj.Var, varDeclArray.getVarName(), new Struct(Struct.Array, varDeclsType.struct));
+			varNode = Tab.insert(Obj.Elem, varDeclArray.getVarName(), new Struct(Struct.Array, varDeclsType.struct));
 			nVars++;
 		}
 		else {
@@ -183,7 +183,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	//=============================ENUMS==================================
-	
+	int enumDeclCounter = 0;
 	public void visit(EnumName enumName) {
 		Obj defined = Tab.find(enumName.getEnumName());
 		if (defined != Tab.noObj) {
@@ -192,6 +192,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		else  {
 			currentEnum = Tab.insert(Obj.Elem, enumName.getEnumName() , enumType);
 			enumName.obj = currentEnum;
+			enumDeclCounter = 0;
 			Tab.openScope();
 		}
 	}
@@ -207,14 +208,17 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(SingleEnumDecl singleEnumDecl) {
 		if (currentEnum == null) {
 			report_error("Greska na liniji " + singleEnumDecl.getLine() + " : Enum literal ne moze biti definisan izvan enuma!", null);
+			return;
 		}
 		
 		Obj enumLiteral = Tab.find(singleEnumDecl.getLiteralName());
 		if (enumLiteral != Tab.noObj) {
 			report_error("Greska na liniji " + singleEnumDecl.getLine() + " : Enum literal " + singleEnumDecl.getLiteralName() + " je vec definisan u enumu " + currentEnum.getName() + "!", null);
+			return;
 		}
 		
-		Tab.insert(Obj.Elem, singleEnumDecl.getLiteralName(), Tab.intType);
+		Obj obj = Tab.insert(Obj.Con, singleEnumDecl.getLiteralName(), Tab.intType);
+		obj.setAdr(enumDeclCounter++);
 	}
 	
 	public void visit(EnumDeclEqual enumDeclEqual) {
@@ -227,7 +231,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				report_error("Greska na liniji " + enumDeclEqual.getLine() + " : Enum literal " + enumDeclEqual.getLiteralName() + " je vec definisan u enumu " + currentEnum.getName() + "!", null);
 			}
 			
-			Tab.insert(Obj.Elem, enumDeclEqual.getLiteralName(), Tab.intType);
+			if (enumDeclEqual.getN1() <= enumDeclCounter) {
+				report_error("Greska na liniji " + enumDeclEqual.getLine() + " : Enum literal " + enumDeclEqual.getLiteralName() + " ne moze imati vrednost " + enumDeclEqual.getN1() + "!", null);
+			}
+			
+			enumDeclCounter = enumDeclEqual.getN1();
+			Obj obj = Tab.insert(Obj.Con, enumDeclEqual.getLiteralName(), Tab.intType);
+			obj.setAdr(enumDeclCounter++);
 		}
 	}
 	
@@ -385,10 +395,15 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		designator.obj = obj;
 	}
 	
+	public void visit(DesignatorName designatorName) {
+		Obj obj = Tab.find(designatorName.getName());
+		designatorName.obj = obj;
+	}
+	
 	public void visit (ArrIdentDesign designator) {
-		Obj obj = Tab.find(designator.getName());
+		Obj obj = Tab.find(designator.getDesignatorName().obj.getName());
 		if (obj == Tab.noObj) {
-			report_error("Greska na liniji " + designator.getLine() + " : ime " + designator.getName() + " nije deklarisano!", null);
+			report_error("Greska na liniji " + designator.getLine() + " : ime " + designator.getDesignatorName().obj.getName() + " nije deklarisano!", null);
 		}
 		
 		designator.obj = obj;
@@ -634,7 +649,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public void visit(PrintStmt printStmt) {
 		Struct t = printStmt.getExpr().struct;
-		if (t != Tab.intType && t != Tab.charType) report_error("Greska na liniji " + printStmt.getLine() + " : Operant instruckije PRINT mora biti INT ili CHAR tipa!", null); 
+		//Tab.
+		if (t.getKind() == Struct.Array) {
+			t = t.getElemType();
+		}
+		
+		if (t != Tab.intType && t != Tab.charType) 
+			report_error("Greska na liniji " + printStmt.getLine() + " : Operant instruckije PRINT mora biti INT ili CHAR tipa!", null); 
 	}
 	
 	

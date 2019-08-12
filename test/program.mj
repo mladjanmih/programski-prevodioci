@@ -1,21 +1,19 @@
 program MJProgram
-	int x, y;
+
+	int a,b,c,d,e,f,g;
+		int r[];
 { 	
-	int k() int c; {
-		c = 2;
-		print(0);
-		return c + 2;
-	}
-	
 	void main() {
-		x = 3;
-		print(1);
-		print(x);
-		
-		k();
-		
-		x = x + 3;
-		print(x);
+	//	print(k);
+	//	k++;
+	//	print(k);	
+		r = new int[2];
+		a = 2;
+		r[0] = 3;
+		r[1] = 22;
+		r[1] = r[0] + a + r[1];
+		print(r[0]); print(r[1]); 
+		print(a);
 		return;
 	}
 }

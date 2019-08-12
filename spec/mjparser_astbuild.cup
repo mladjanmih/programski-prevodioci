@@ -49,10 +49,11 @@ scan with {:
 
 
 terminal READ, PRINT, NEW, RETURN, INC, DEC, EQUAL, PLUS, MINUS, DIV, MUL, MOD;
-terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, CHAR;
+terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET;
 terminal PROG, CONST, SEMI, COMMA, DOT, VOID, BOOL, ENUM;
 terminal String IDENT;
 terminal Integer NUMBER;
+terminal String CHAR;
 
 nonterminal Statement Statement;
 nonterminal  Addop Addop;
@@ -77,7 +78,7 @@ nonterminal FormalParamDecl FormalParamDecl;
 nonterminal ActualPars ActualPars;
 nonterminal ActualParamList ActualParamList;
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor;
 
 
@@ -164,7 +165,7 @@ FormalParamDecl ::= (ParamDecl) Type:type IDENT:name {: RESULT=new ParamDecl(typ
 					
 ConstDecl ::= (NumConstDecl) IDENT:constName EQUAL NUMBER:N1 {: RESULT=new NumConstDecl(constName, N1); RESULT.setLine(constNameleft); :}
 			|
-			(CharConstDecl) IDENT:constName EQUAL CHAR {: RESULT=new CharConstDecl(constName); RESULT.setLine(constNameleft); :}
+			(CharConstDecl) IDENT:constName EQUAL CHAR:C1 {: RESULT=new CharConstDecl(constName, C1); RESULT.setLine(constNameleft); :}
 			|
 			(BoolConstDecl) IDENT:constName EQUAL BOOL {: RESULT=new BoolConstDecl(constName); RESULT.setLine(constNameleft); :}
 			;
@@ -215,7 +216,7 @@ FuncName ::= (FuncName) Designator:d {: RESULT=new FuncName(d); RESULT.setLine(d
 
 Factor ::= (NumConstFact) NUMBER:N1 {: RESULT=new NumConstFact(N1); RESULT.setLine(N1left); :} 
 			|
-			(CharConstFact) CHAR {: RESULT=new CharConstFact(); :}
+			(CharConstFact) CHAR:C1 {: RESULT=new CharConstFact(C1); RESULT.setLine(C1left); :}
 			|
 			(ExprFact) LPAREN Expr:E1 RPAREN {: RESULT=new ExprFact(E1); RESULT.setLine(E1left); :}
 			|
@@ -252,11 +253,12 @@ Mulop ::= (MulMulop) MUL {: RESULT=new MulMulop(); :}
 		(ModMulop) MOD {: RESULT=new ModMulop(); :}
 		;
 
+DesignatorName ::= (DesignatorName) IDENT:name {: RESULT=new DesignatorName(name); RESULT.setLine(nameleft); :};
 Designator ::= (IdentDesign) IDENT:name {: RESULT=new IdentDesign(name); RESULT.setLine(nameleft); :}
 			|
 			(SubIdendDesign) IDENT:name DOT IDENT:subName {: RESULT=new SubIdendDesign(name, subName); RESULT.setLine(nameleft); :}
 			|
-			(ArrIdentDesign) IDENT:name LBRACKET Expr:E1 RBRACKET {: RESULT=new ArrIdentDesign(name, E1); RESULT.setLine(nameleft); :}
+			(ArrIdentDesign) DesignatorName:D1 LBRACKET Expr:E2 RBRACKET {: RESULT=new ArrIdentDesign(D1, E2); RESULT.setLine(D1left); :}
 			;
 			
 Type ::= (Type) IDENT:typeName {: RESULT=new Type(typeName); RESULT.setLine(typeNameleft); :};

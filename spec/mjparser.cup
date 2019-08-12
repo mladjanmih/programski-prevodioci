@@ -49,17 +49,18 @@ scan with {:
 
 
 terminal READ, PRINT, NEW, RETURN, INC, DEC, EQUAL, PLUS, MINUS, DIV, MUL, MOD;
-terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, CHAR;
+terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET;
 terminal PROG, CONST, SEMI, COMMA, DOT, VOID, BOOL, ENUM;
 terminal String IDENT;
 terminal Integer NUMBER;
+terminal String CHAR;
 
 nonterminal Statement,  Addop, Mulop, VarType, ConstType;
 nonterminal DeclarationList, Declaration, ListVarDeclTypeList, VarDeclTypeList, VarDeclList, MethodDeclList;
 nonterminal ConstDeclList, EnumDeclList, VarDecl, EnumDecl, ConstDecl, StatementList, FormalParamList, FormPars, FormalParamDecl;
 nonterminal ActualPars, ActualParamList;
 
-nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName;
+nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor;
 
 
@@ -234,11 +235,12 @@ Mulop ::= (MulMulop) MUL
 		(ModMulop) MOD
 		;
 
+DesignatorName ::= (DesignatorName) IDENT:name;
 Designator ::= (IdentDesign) IDENT:name
 			|
 			(SubIdendDesign) IDENT:name DOT IDENT:subName
 			|
-			(ArrIdentDesign) IDENT:name LBRACKET Expr RBRACKET
+			(ArrIdentDesign) DesignatorName LBRACKET Expr RBRACKET
 			;
 			
 Type ::= (Type) IDENT:typeName;
