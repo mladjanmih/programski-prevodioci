@@ -100,7 +100,7 @@ Declaration ::= (ConstDeclaration) CONST ConstType:constType ConstDeclList:C1 SE
 			|
 			(VarDeclaration) VarDeclTypeList:V1 {: RESULT=new VarDeclaration(V1); RESULT.setLine(V1left); :} 
 			|
-			(EnumDeclaration) ENUM EnumName:enumName LBRACE EnumDeclList:E1 RBRACE SEMI {: RESULT=new EnumDeclaration(enumName, E1); RESULT.setLine(enumNameleft); :}
+			(EnumDeclaration) ENUM EnumName:enumName LBRACE EnumDeclList:E1 RBRACE {: RESULT=new EnumDeclaration(enumName, E1); RESULT.setLine(enumNameleft); :}
 			;
 
 ListVarDeclTypeList ::= (ListVarDeclTypeLists) ListVarDeclTypeList:L1 VarDeclTypeList:V2 {: RESULT=new ListVarDeclTypeLists(L1, V2); RESULT.setLine(L1left); :}

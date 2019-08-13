@@ -82,7 +82,7 @@ Declaration ::= (ConstDeclaration) CONST ConstType:constType ConstDeclList SEMI
 			|
 			(VarDeclaration) VarDeclTypeList 
 			|
-			(EnumDeclaration) ENUM EnumName:enumName LBRACE EnumDeclList RBRACE SEMI
+			(EnumDeclaration) ENUM EnumName:enumName LBRACE EnumDeclList RBRACE
 			;
 
 ListVarDeclTypeList ::= (ListVarDeclTypeLists) ListVarDeclTypeList VarDeclTypeList

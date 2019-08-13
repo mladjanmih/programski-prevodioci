@@ -17,7 +17,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	private static final String TRUE = "true";
 	private static final String FALSE = "false";
 	public static final Struct boolType = new Struct(Struct.Bool);
-	public static final Struct enumType = new Struct(Struct.Int);
+	//public static final Struct enumType = new Struct(Struct.Int);
 	
 	Logger log = Logger.getLogger(getClass());
 
@@ -196,13 +196,16 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	//=============================ENUMS==================================
 	int enumDeclCounter = 0;
+	private HashMap<String, Struct> enumStructs = new HashMap<String, Struct>();
 	public void visit(EnumName enumName) {
 		Obj defined = Tab.find(enumName.getEnumName());
 		if (defined != Tab.noObj) {
 			report_error("Greska na liniji " + enumName.getLine() + " : Identifikator " + enumName.getEnumName() + " je vec definisan u okruzujucem scope-u!", null);
 		}
 		else  {
-			currentEnum = Tab.insert(Obj.Type, enumName.getEnumName() , new Struct(Struct.Int));
+			Struct str = new Struct(Struct.Int);
+			currentEnum = Tab.insert(Obj.Type, enumName.getEnumName() , str);
+			enumStructs.put(enumName.getEnumName(),  str);
 			enumName.obj = currentEnum;
 			enumDeclCounter = 0;
 			Tab.openScope();
@@ -338,7 +341,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 		
 		Obj par = pars.get(actParamNo++);
-		if (!par.getType().compatibleWith(actualParams.getExpr().struct)) {
+		if (!par.getType().compatibleWith(actualParams.getExpr().struct) && !enumAssignable(par.getType(), actualParams.getExpr().struct)) {
 			//if (!(actualParams.getExpr().struct.getElemType() != null && par.getType().compatibleWith(actualParams.getExpr().struct.getElemType()))) 
 				report_error("Greska na liniji " + actualParams.getLine() + " : Tip prosledjenog parametra nije kompatibilan sa tipom parametra funkcije!", null);
 		}
@@ -434,7 +437,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		
 		designator.obj = obj;
 		
-		if (!designator.getExpr().struct.compatibleWith(Tab.intType)) {
+		if (!designator.getExpr().struct.compatibleWith(Tab.intType) && !isEnumType(designator.getExpr().struct)) {
 			report_error("Greska na liniji " + designator.getLine() + " : nekompatibilan tip u izrazu za indeksiranje!", null);
 		}
 	}
@@ -493,8 +496,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 //			t = t.getElemType();
 //		}
 	
-		if ((te.equals(t) && ((te == Tab.intType) || (te == Tab.charType) || (te == boolType) || (te.getKind() == Struct.Int))) || enumCompatible(t, te)) {
-			if (te != Tab.intType && (te.getKind() == Struct.Int))
+		if ((te.equals(t) && ((te == Tab.intType) || (te == Tab.charType) || (te == boolType) || (isEnumType(te)))) || intEnumCompatible(t, te) || enumExpCompatible(t, te)) {
+			if (isEnumType(te))
 				addopExpr.struct = Tab.intType;
 			else	
 				addopExpr.struct = te;
@@ -521,8 +524,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 //			mt = mt.getElemType();
 //		}
 	
-		if ((mte.equals(mt) && ((mte == Tab.intType) || (mte == Tab.charType) || (mte == boolType) || (mte.getKind() == Struct.Int))) || enumCompatible(mt, mte)) {
-			if (mte != Tab.intType && (mte.getKind() == Struct.Int))
+		if ((mte.equals(mt) && ((mte == Tab.intType) || (mte == Tab.charType) || (mte == boolType) || (mte.getKind() == Struct.Int))) || intEnumCompatible(mt, mte) || enumExpCompatible(mt, mte)) {
+			if (isEnumType(mte))
 				mulopTerm.struct = Tab.intType;
 			else
 				mulopTerm.struct = mte;
@@ -681,14 +684,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public void visit(PrintNumStmt printNumStmt) {
 		Struct t = printNumStmt.getExpr().struct;
-		if (t != Tab.intType && t != Tab.charType && t != boolType) 
+		if (t != Tab.intType && t != Tab.charType && t != boolType && !isEnumType(t)) 
 			report_error("Greska na liniji " + printNumStmt.getLine() + " : Operant instruckije PRINT mora biti INT ili CHAR tipa!", null); 
 	}
 	
 	public void visit(PrintStmt printStmt) {
 		Struct t = printStmt.getExpr().struct;
 		
-		if (t != Tab.intType && t != Tab.charType && t != boolType) 
+		if (t != Tab.intType && t != Tab.charType && t != boolType && !isEnumType(t)) 
 			report_error("Greska na liniji " + printStmt.getLine() + " : Operant instruckije PRINT mora biti INT ili CHAR tipa!", null); 
 	}
 	
@@ -698,13 +701,21 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		return !errorDetected;
 	}
 	
-	private boolean enumCompatible(Struct s1, Struct s2) {
+	private boolean intEnumCompatible(Struct s1, Struct s2) {
 		return enumAssignable(s1, s2) || enumAssignable(s2, s1);
+	}
+	
+	private boolean enumExpCompatible(Struct s1, Struct s2) {
+		return isEnumType(s1) && isEnumType(s2);
 	}
 	
 	private boolean enumAssignable(Struct dest, Struct src) {
 		return dest.equals(Tab.intType) 
-				&& src.getKind() == Struct.Int;
+				&& isEnumType(src);
+	}
+
+	private boolean isEnumType(Struct str) {
+		return enumStructs.containsValue(str);
 	}
 	
 	private Obj findObjInCurrentScope(String name) {

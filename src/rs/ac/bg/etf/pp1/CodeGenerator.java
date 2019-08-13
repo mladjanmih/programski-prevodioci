@@ -16,7 +16,7 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	private static final String TRUE = "true";
 	private static final String FALSE = "false";
-	
+	private boolean returnFound = false;
 	public int getMainPc() {
 		return mainPc;
 	}
@@ -56,6 +56,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.put(Code.enter);
 		Code.put(formParamCounter.getCount());
 		Code.put(formParamCounter.getCount() + varCounter.getCount());
+		returnFound = false;
 	}
 	
 	public void visit(MethodNoVoidTypeName methodNoVoidTypeName) {
@@ -79,13 +80,15 @@ public class CodeGenerator extends VisitorAdaptor {
 		Code.put(formParamCounter.getCount());
 		report_info("Pronadjeno " + varCounter.getCount() + " promenljivih i " + formParamCounter.getCount() + " formalnih parametara!", null );
 		Code.put(formParamCounter.getCount() + varCounter.getCount());
+		returnFound = false;
 	}
 	
 	public void visit(MethodDecl methodDecl) {
-//		Code.put(Code.exit);
-//		Code.put(Code.return_);
+		if (!returnFound) {
+			Code.put(Code.exit);
+			Code.put(Code.return_);
+		}
 	}
-	
 	
 	//=================STATEMENTS==================
 	//U expr si izracunao vec vrednost izraza
@@ -132,11 +135,13 @@ public class CodeGenerator extends VisitorAdaptor {
 	public void visit(ReturnNoExpr returnNoExpr) {
 		Code.put(Code.exit);
 		Code.put(Code.return_);
+		returnFound = true;
 	}
 	
 	public void visit(ReturnStmt returnStmt) {
 		Code.put(Code.exit);
 		Code.put(Code.return_);
+		returnFound = true;
 	}
 	
 	public void visit(MulopTerm mulopTerm) {
@@ -151,6 +156,21 @@ public class CodeGenerator extends VisitorAdaptor {
 		}
 	}
 	
+	public void visit(ReadStmt readStmt) {
+		if (readStmt.getDesignator().obj.getType() == Tab.charType)
+			Code.put(Code.bread);
+		else
+			Code.put(Code.read);
+		
+		if (readStmt.getDesignator().obj.getType().getKind() == Struct.Array) {
+			 if (readStmt.getDesignator().obj.getType().getKind() == Struct.Char) Code.put(Code.bastore);
+		        else Code.put(Code.astore);
+		}
+		else {
+			Code.store(readStmt.getDesignator().obj);
+		}
+		
+	}
 	
 	//============DESIGNATOR STATEMENTS============
 	public void visit(Assignment assignment) {
@@ -233,7 +253,8 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	public void visit(ArrIdentDesign arrIdentDesign) {
 		SyntaxNode parent = arrIdentDesign.getParent();
-		if (parent.getClass() != Assignment.class) {
+		if (parent.getClass() != Assignment.class
+				&& parent.getClass() != ReadStmt.class) {
 			Code.load(arrIdentDesign.obj);
 		}
 	}

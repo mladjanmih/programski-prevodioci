@@ -1,41 +1,24 @@
-program MJProgram
-	const char c1 = 'a';
-	const bool trueConst = true, falseConst = false;
-	int r[], k[];
-	int a;
-	char l;
-	bool k1, logic[];
-	enum Brojevi { JEDAN = 1, DVA = 2, TRI = 3 };
-{ 	
-	int func(int t, int r[]) {
-		r[0] = r[0] + 2;
-		return t + r[0];
-	}
-	void main() Brojevi broj; {
-		logic = new bool[2];
-		logic[0] = true;
-		//print(logic[0]);
-		//Brojevi.TRI = 2;
-		r = new int[2];
-		broj = Brojevi.JEDAN;
-		r[r[r[0]]] = 2;
-		print(r[0]);
-		a = 2 + Brojevi.TRI+ Brojevi.JEDAN;
-		print('a', 5);
-		print('=');
-		print(a,1);
-		k = r;
-		r[0] = 4;
-		r[1] = 22;
-		k[1] = r[0] + a + r[1];
-		print(r[1]); 
+// Test301
+
+program test301
+
+	enum Broj { NULA, JEDAN, PET=5, DESET=10}
+
+	const int jedan = 1;
+	const int pet = 5;
+	char a;
+	int niz[];
+	char nizch[];
+	
+{
+
+	void main()	
+	{
+		niz = new int[2];
+		niz[0] = 1;
+		read(a);
 		print(a);
-		print(func(1, r));
-		print(r[0]);
-		l = c1;
-		print(l, 5);
-		print(Brojevi.JEDAN);
-		print(true);
-		return;
 	}
 }
+
+
