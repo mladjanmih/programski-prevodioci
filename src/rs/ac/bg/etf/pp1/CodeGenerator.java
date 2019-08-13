@@ -14,6 +14,9 @@ import rs.etf.pp1.symboltable.concepts.Struct;
 public class CodeGenerator extends VisitorAdaptor {
 	private int mainPc;
 	
+	private static final String TRUE = "true";
+	private static final String FALSE = "false";
+	
 	public int getMainPc() {
 		return mainPc;
 	}
@@ -84,7 +87,6 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	
-
 	//=================STATEMENTS==================
 	//U expr si izracunao vec vrednost izraza
 	public void visit(PrintStmt printStmt) {
@@ -98,19 +100,32 @@ public class CodeGenerator extends VisitorAdaptor {
 			Code.loadConst(5);
 			Code.put(Code.print);
 		}
-		else {
+		else if (struct == Tab.charType){
 			Code.loadConst(1);
 			Code.put(Code.bprint);
 		}
+		else {
+			Code.loadConst(5);
+			Code.put(Code.print);
+		}
+		
 		
 	}
 	
 	public void visit(PrintNumStmt printNumStmt) {
-		if (printNumStmt.getExpr().struct == Tab.intType) {
+		Struct struct = printNumStmt.getExpr().struct;
+		
+		if (struct.getKind() == Struct.Array) {
+			struct = struct.getElemType();
+		}
+		Code.loadConst(printNumStmt.getN2());
+		if (struct == Tab.intType) {
 			
+			Code.put(Code.print);
 		}
 		else {
-			
+		//	Code.loadConst(1);
+			Code.put(Code.bprint);
 		}
 	}
 	
@@ -147,7 +162,13 @@ public class CodeGenerator extends VisitorAdaptor {
 		}
 		else
 		{
-			Code.store(assignment.getDesignator().obj);
+			if (assignment.getDesignator().obj.getType().getKind() == Struct.Array) {
+				 if (assignment.getDesignator().obj.getType().getKind() == Struct.Char) Code.put(Code.bastore);
+			        else Code.put(Code.astore);
+			}
+			else {
+				Code.store(assignment.getDesignator().obj);
+			}
 		}
 	}
 	
@@ -195,27 +216,19 @@ public class CodeGenerator extends VisitorAdaptor {
 		SyntaxNode parent = designator.getParent();
 		
 		if ((Assignment.class != parent.getClass()) && 
-				(FuncCall.class != parent.getClass()) && 
-				
+				(FuncCall.class != parent.getClass()) &&
+				(ProcCall.class != parent.getClass()) && 
 				(designator.obj.getKind() != Obj.Meth)) {
+			
 			Code.load(designator.obj);
 		}
+		
 		
 	}
 	
 	public void visit(DesignatorName designatorName) {
 		Obj o = designatorName.obj;
-        if (o.getLevel()==0) { // global variable 
-      	  	Code.put(Code.getstatic); Code.put2(o.getAdr()); 
-	      }
-        else {
-	      // local variable
-	      if (0 <= o.getAdr() && o.getAdr() <= 3) 
-	          Code.put(Code.load_n + o.getAdr());
-	      else { 
-	      	 Code.put(Code.load); Code.put(o.getAdr()); 
-	      } 
-        }
+        Code.load(designatorName.obj);
 	}
 	
 	public void visit(ArrIdentDesign arrIdentDesign) {
@@ -224,7 +237,11 @@ public class CodeGenerator extends VisitorAdaptor {
 			Code.load(arrIdentDesign.obj);
 		}
 	}
-	
+	public void visit (SubIdendDesign designator) {
+
+			Code.load(designator.obj);
+		
+	}
 	
 	//==================FACTORS====================
 	public void visit(FuncCall funcCall) {
@@ -258,6 +275,18 @@ public class CodeGenerator extends VisitorAdaptor {
 		Obj con = Tab.insert(Obj.Con, "$", charConstFact.struct);
 		con.setLevel(0);
 		con.setAdr(charConstFact.getC1().charAt(1));
+		Code.load(con);
+	}
+
+	public void visit(BoolConstFact boolConstFact) {
+		Obj con = Tab.insert(Obj.Con, "$", boolConstFact.struct);
+		con.setLevel(0);
+		if (TRUE.equals(boolConstFact.getB1())) {
+			con.setAdr(1);
+		}
+		else {
+			con.setAdr(0);
+		}
 		Code.load(con);
 	}
 } 

@@ -50,10 +50,11 @@ scan with {:
 
 terminal READ, PRINT, NEW, RETURN, INC, DEC, EQUAL, PLUS, MINUS, DIV, MUL, MOD;
 terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET;
-terminal PROG, CONST, SEMI, COMMA, DOT, VOID, BOOL, ENUM;
+terminal PROG, CONST, SEMI, COMMA, DOT, VOID, ENUM;
 terminal String IDENT;
 terminal Integer NUMBER;
 terminal String CHAR;
+terminal String BOOL;
 
 nonterminal Statement,  Addop, Mulop, VarType, ConstType;
 nonterminal DeclarationList, Declaration, ListVarDeclTypeList, VarDeclTypeList, VarDeclList, MethodDeclList;

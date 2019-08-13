@@ -12,6 +12,7 @@
 				<exclude name="CodeGenerator.java"/>
 				<exclude name="CounterVisitor.java"/>
 				<exclude name="AssignmentVisitor.java"/>
+				<exclude name="BoolDumpSymbolTableVisitor.java" />
 			</fileset>
 			<fileset dir="spec">
 				<exclude name="mjlexer.lex"/>

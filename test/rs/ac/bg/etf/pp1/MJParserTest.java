@@ -18,6 +18,7 @@ import rs.ac.bg.etf.pp1.ast.Program;
 import rs.ac.bg.etf.pp1.util.Log4JUtils;
 import rs.etf.pp1.mj.runtime.Code;
 import rs.etf.pp1.symboltable.Tab;
+import rs.etf.pp1.symboltable.concepts.Obj;
 
 public class MJParserTest {
 
@@ -43,16 +44,21 @@ public class MJParserTest {
 	        
 	        Program prog = (Program)(s.value); 
 	        Tab.init();
+	        
 
 	        // ispis sintaksnog stabla
 			log.info(prog.toString(""));
 
 			// ispis prepoznatih programskih konstrukcija
+			
+			Tab.currentScope().addToLocals(new Obj(Obj.Type, "bool", SemanticAnalyzer.boolType));
 			SemanticAnalyzer v = new SemanticAnalyzer();
 			prog.traverseBottomUp(v); 
 
 			log.info("===================================");
-			Tab.dump();
+			
+			BoolDumpSymbolTableVisitor dumpVisitor = new BoolDumpSymbolTableVisitor();
+			Tab.dump(dumpVisitor);
 			
 			if (!p.errorDetected && v.passed()) {
 				File objFile = new File("test/program.obj");

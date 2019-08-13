@@ -50,10 +50,11 @@ scan with {:
 
 terminal READ, PRINT, NEW, RETURN, INC, DEC, EQUAL, PLUS, MINUS, DIV, MUL, MOD;
 terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET;
-terminal PROG, CONST, SEMI, COMMA, DOT, VOID, BOOL, ENUM;
+terminal PROG, CONST, SEMI, COMMA, DOT, VOID, ENUM;
 terminal String IDENT;
 terminal Integer NUMBER;
 terminal String CHAR;
+terminal String BOOL;
 
 nonterminal Statement Statement;
 nonterminal  Addop Addop;
@@ -167,7 +168,7 @@ ConstDecl ::= (NumConstDecl) IDENT:constName EQUAL NUMBER:N1 {: RESULT=new NumCo
 			|
 			(CharConstDecl) IDENT:constName EQUAL CHAR:C1 {: RESULT=new CharConstDecl(constName, C1); RESULT.setLine(constNameleft); :}
 			|
-			(BoolConstDecl) IDENT:constName EQUAL BOOL {: RESULT=new BoolConstDecl(constName); RESULT.setLine(constNameleft); :}
+			(BoolConstDecl) IDENT:constName EQUAL BOOL:B1 {: RESULT=new BoolConstDecl(constName, B1); RESULT.setLine(constNameleft); :}
 			;
 	
 StatementList ::= (StmtDeclarations) StatementList:S1 Statement:S2 {: RESULT=new StmtDeclarations(S1, S2); RESULT.setLine(S1left); :}
@@ -220,7 +221,7 @@ Factor ::= (NumConstFact) NUMBER:N1 {: RESULT=new NumConstFact(N1); RESULT.setLi
 			|
 			(ExprFact) LPAREN Expr:E1 RPAREN {: RESULT=new ExprFact(E1); RESULT.setLine(E1left); :}
 			|
-			(BoolConstFact) BOOL {: RESULT=new BoolConstFact(); :}
+			(BoolConstFact) BOOL:B1 {: RESULT=new BoolConstFact(B1); RESULT.setLine(B1left); :}
 			|
 			(NewFact) NEW Type:T1 {: RESULT=new NewFact(T1); RESULT.setLine(T1left); :}
 			|
