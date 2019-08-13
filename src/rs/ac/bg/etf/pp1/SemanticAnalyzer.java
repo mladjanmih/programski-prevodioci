@@ -10,6 +10,7 @@ import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
+import rs.ac.bg.etf.pp1.AssignmentVisitor.ArrayUsageVisitor;
 import rs.ac.bg.etf.pp1.ast.*;
 
 public class SemanticAnalyzer extends VisitorAdaptor {
@@ -366,6 +367,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			designator.obj = new Obj(Obj.Meth, designator.getName(), Tab.noType);
 		}
 		else {
+			if (obj.getType().getKind() == Struct.Array) {
+				SyntaxNode parent = designator.getParent();
+				if (parent.getClass() == Increment.class || 
+						parent.getClass() == Decrement.class ||
+						parent.getClass() == ReadStmt.class) {
+					report_error("Greska na liniji " + designator.getLine() + " : referenca na niz se ne moze koristiti u ovom izrazu!", null);
+				}
+			}
 			designator.obj = obj;
 		}
 	}
@@ -416,10 +425,37 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	//===========================EXPR================================
 	public void visit(PosExpr posExpr) {
+		ArrayUsageVisitor auv = new ArrayUsageVisitor();
+		posExpr.traverseTopDown(auv);
+		
+		if (!auv.validExpression()) {
+			report_error("Greska na liniji " + posExpr.getLine() + " : nije moguce koristiti referncu na niz u ovom izrazu!", null);
+		}
+		
+		if (posExpr.getParent().getClass() == PrintStmt.class || posExpr.getParent().getClass() == PrintNumStmt.class) {
+			if (auv.isArrayReference()) {
+				report_error("Greska na liniji " + posExpr.getLine() + " : nije moguce koristiti referncu na niz u ovom izrazu!", null);
+			}
+		}
+		
+		
 		posExpr.struct = posExpr.getSignedExpr().struct;
 	}
 	
 	public void visit(NegExpr negExpr) {
+		ArrayUsageVisitor auv = new ArrayUsageVisitor();
+		negExpr.traverseTopDown(auv);
+		
+//		if (!auv.validExpression()) {
+//			report_error("Greska na liniji " + negExpr.getLine() + " : nije moguce koristiti referncu na niz u ovom izrazu!", null);
+//		}
+//		
+//		if (negExpr.getParent().getClass() == PrintStmt.class || negExpr.getParent().getClass() == PrintNumStmt.class) {
+//			if (auv.isArrayReference()) {
+//				report_error("Greska na liniji " + negExpr.getLine() + " : nije moguce koristiti referncu na niz u ovom izrazu!", null);
+//			}
+//		}
+		
 		negExpr.struct = negExpr.getSignedExpr().struct;
 	}
 	
