@@ -11,14 +11,17 @@ program MJProgram
 		r[0] = r[0] + 2;
 		return t + r[0];
 	}
-	void main() {
+	void main() Brojevi broj; {
 		logic = new bool[2];
 		logic[0] = true;
 		//print(logic[0]);
-		Brojevi.TRI = 2;
+		//Brojevi.TRI = 2;
 		r = new int[2];
+		broj = Brojevi.JEDAN;
+		r[r[r[0]]] = 2;
+		print(r[0]);
 		a = 2 + Brojevi.TRI+ Brojevi.JEDAN;
-		print('a');
+		print('a', 5);
 		print('=');
 		print(a,1);
 		k = r;

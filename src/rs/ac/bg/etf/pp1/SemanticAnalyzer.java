@@ -193,6 +193,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 	}
 	
+	
 	//=============================ENUMS==================================
 	int enumDeclCounter = 0;
 	public void visit(EnumName enumName) {
@@ -201,7 +202,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			report_error("Greska na liniji " + enumName.getLine() + " : Identifikator " + enumName.getEnumName() + " je vec definisan u okruzujucem scope-u!", null);
 		}
 		else  {
-			currentEnum = Tab.insert(Obj.Elem, enumName.getEnumName() , enumType);
+			currentEnum = Tab.insert(Obj.Type, enumName.getEnumName() , new Struct(Struct.Int));
 			enumName.obj = currentEnum;
 			enumDeclCounter = 0;
 			Tab.openScope();
@@ -228,7 +229,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			return;
 		}
 		
-		Obj obj = Tab.insert(Obj.Con, singleEnumDecl.getLiteralName(), Tab.intType);
+		Obj obj = Tab.insert(Obj.Con, singleEnumDecl.getLiteralName(), currentEnum.getType());
 		obj.setAdr(enumDeclCounter++);
 	}
 	
@@ -247,10 +248,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			}
 			
 			enumDeclCounter = enumDeclEqual.getN1();
-			Obj obj = Tab.insert(Obj.Con, enumDeclEqual.getLiteralName(), Tab.intType);
+			Obj obj = Tab.insert(Obj.Con, enumDeclEqual.getLiteralName(), currentEnum.getType());
 			obj.setAdr(enumDeclCounter++);
 		}
 	}
+	
 	
 	//==========================FUNCTIONS=================================	
 	HashMap<String, ArrayList<Obj>> methodFormalPars = new HashMap<>();
@@ -380,15 +382,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			designator.obj = new Obj(Obj.Meth, designator.getName(), Tab.noType);
 		}
 		else {
-//			if (obj.getType().getKind() == Struct.Array) {
-//				SyntaxNode parent = designator.getParent();
-//				if (parent.getClass() == Increment.class || 
-//						parent.getClass() == Decrement.class ||
-//						parent.getClass() == ReadStmt.class) {
-//					report_error("Greska na liniji " + designator.getLine() + " : referenca na niz se ne moze koristiti u ovom izrazu!", null);
-//				}
-//			}
-			designator.obj = obj;
+			if (obj.getKind() == obj.Type) {
+				report_error("Greska na liniji " + designator.getLine() + " : Nazivi tipova se ne mogu koristiti kao identifikatori promenljivih!", null);
+				designator.obj = Tab.noObj;
+			}
+			else {
+				designator.obj = obj;
+			}
 		}
 	}
 	
@@ -396,11 +396,13 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Obj obj = Tab.find(designator.getName());
 		if (obj == Tab.noObj) {
 			report_error("Greska na liniji " + designator.getLine() + " : ime " + designator.getName() + " nije deklarisano!", null);
+			designator.obj = Tab.noObj;
+			return;
 		}
 		
-		if (!obj.getType().equals(enumType)) {
-			report_error("Greska na liniji " + designator.getLine() + " : ime " + designator.getName() + " nije izraz enumeracije!", null);
-		}
+//		if (!obj.getType().equals(enumType)) {
+//			report_error("Greska na liniji " + designator.getLine() + " : ime " + designator.getName() + " nije izraz enumeracije!", null);
+//		}
 		
 		Collection<Obj> locals = obj.getLocalSymbols();
 		Obj enumerator = null;
@@ -413,6 +415,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 		if (enumerator == null) {
 			report_error("Greska na liniji " + designator.getLine() + " : enumerator " + designator.getSubName() + " nije deklarisan!", null);
+			designator.obj = Tab.noObj;
+			return;
 		}
 		designator.obj = enumerator;
 	}
@@ -489,8 +493,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 //			t = t.getElemType();
 //		}
 	
-		if ((te.equals(t) && ((te == Tab.intType) || (te == Tab.charType) || (te == boolType))) || enumCompatible(t, te)) {
-			if (te == enumType || t == enumType)
+		if ((te.equals(t) && ((te == Tab.intType) || (te == Tab.charType) || (te == boolType) || (te.getKind() == Struct.Int))) || enumCompatible(t, te)) {
+			if (te != Tab.intType && (te.getKind() == Struct.Int))
 				addopExpr.struct = Tab.intType;
 			else	
 				addopExpr.struct = te;
@@ -517,8 +521,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 //			mt = mt.getElemType();
 //		}
 	
-		if ((mte.equals(mt) && ((mte == Tab.intType) || (mte == Tab.charType) || (mte == boolType))) || enumCompatible(mt, mte)) {
-			if (mt == enumType || mte == enumType)
+		if ((mte.equals(mt) && ((mte == Tab.intType) || (mte == Tab.charType) || (mte == boolType) || (mte.getKind() == Struct.Int))) || enumCompatible(mt, mte)) {
+			if (mte != Tab.intType && (mte.getKind() == Struct.Int))
 				mulopTerm.struct = Tab.intType;
 			else
 				mulopTerm.struct = mte;
@@ -558,12 +562,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	}
 	
 	public void visit(Var var) {
-//		Obj obj = Tab.find(var.getDesignator().obj.getName());
-//		if (obj == Tab.noObj) {
-//			report_error("Greska na liniji " + var.getLine() + " : Promenljiva " + var.getDesignator().obj.getName() + " nije definisana!", null);
-//		}
-		
-		var.struct = var.getDesignator().obj.getType();
+		var.struct = var.getDesignator().obj.getType(); 	
 	}
 	
 	public void visit(ExprFact exprFact) {
@@ -573,14 +572,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(FuncCall funcCall) {
 		Obj func = funcCall.getFuncName().getDesignator().obj;
 		if (Obj.Meth == func.getKind()) {
-			
 			if (Tab.noType == func.getType()) {
 				report_error("Greska na liniji " + funcCall.getLine() + " : Funkcija bez povratne vrednosti se ne moze koristiti u izrazima!", null);
 			}
 			
 			report_info("Pronadjen poziv funkcije " + funcCall.getLine() + " na liniji " + funcCall.getLine(), null);
 			funcCall.struct = func.getType();
-			
 			if (currentMethodCall != null) {
 				if (methodFormalPars.get(currentMethodCall.getName()).size() != actParamNo) {
 					report_error("Greska na liniji " + funcCall.getLine() + " nije prosledjen dovoljan broj argumenata pozivu funkcije!", null);
@@ -608,35 +605,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Struct destType = assignment.getDesignator().obj.getType();
 		
 		if (exprType.isRefType() ^ destType.isRefType()) {
-//			if (exprType.isRefType() && destType.isRefType()) {
-//				ArrayUsageVisitor auv = new ArrayUsageVisitor();
-//				assignment.getDesignator().traverseTopDown(auv);
-//				boolean destRef = auv.hasArrayReference;
-//				auv = new ArrayUsageVisitor();
-//				assignment.getExpr().traverseTopDown(auv);
-//				boolean srcRef = auv.hasArrayReference;
-//				if ((destRef ^ srcRef)) {
-//					report_error("Greska na liniji " + assignment.getLine() + " : " + "Nekomaptibilni tipovi u dodeli vrednosti!", null);
-//					return;
-//				}
-//			}
-//			
-//			if (!exprType.assignableTo(destType) && !enumAssignable(destType, exprType)
-//			) {
-				report_error("Greska na liniji " + assignment.getLine() + " : " + "Nekomaptibilni tipovi u dodeli vrednosti!", null);
-//			}
+			report_error("Greska na liniji " + assignment.getLine() + " : " + "Nekomaptibilni tipovi u dodeli vrednosti!", null);
 		}
-//		else if (exprType.isRefType()){
-//			if (!exprType.getElemType().assignableTo(destType)) {
-//				report_error("Greska na liniji " + assignment.getLine() + " : " + "Nekomaptibilni tipovi u dodeli vrednosti!", null);
-//			}
-//		}
-//		else {
-//			if (!exprType.assignableTo(destType.getElemType()) && !enumAssignable(destType.getElemType(), exprType)) {
-//				report_error("Greska na liniji " + assignment.getLine() + " : " + "Nekomaptibilni tipovi u dodeli vrednosti!", null);
-//			}
-//		}
-		if (!exprType.assignableTo(destType)) {
+		
+		if (!exprType.assignableTo(destType) && !enumAssignable(destType, exprType)) {
 			report_error("Greska na liniji " + assignment.getLine() + " : " + "Nekomaptibilni tipovi u dodeli vrednosti!", null);
 		}
 		
@@ -732,7 +704,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	private boolean enumAssignable(Struct dest, Struct src) {
 		return dest.equals(Tab.intType) 
-				&& src.equals(enumType);
+				&& src.getKind() == Struct.Int;
 	}
 	
 	private Obj findObjInCurrentScope(String name) {
