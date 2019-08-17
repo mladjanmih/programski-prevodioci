@@ -1,24 +1,23 @@
-// Test301
-
 program test301
 
 	enum Broj { NULA, JEDAN, PET=5, DESET=10}
 
 	const int jedan = 1;
 	const int pet = 5;
-	char a;
+
 	int niz[];
 	char nizch[];
-	
+	char t = 5, f;
 {
 
 	void main()	
+		int bodovi;
+		Broj nula, jedan;
 	{
-		niz = new int[2];
-		niz[0] = 1;
-		read(a);
-		print(a);
+		bodovi = * 3;
+		bodovi++;
+	//	niz[0] = 0;
+	//	niz[0]++;
+	//	print(niz[0]);
 	}
 }
-
-

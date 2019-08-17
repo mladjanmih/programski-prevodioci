@@ -31,9 +31,6 @@ public class CodeGenerator extends VisitorAdaptor {
 		log.info(msg.toString());
 	}
 	
-	public void visit(VarDeclArray varDeclArray) { 
-		
-	}
 	
 	//===================METHODS===================
 	public void visit(MethodVoidTypeName methodVoidTypeName) {
@@ -204,10 +201,21 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	public void visit(Increment increment) {
-		Code.loadConst(1);
-		Code.put(Code.add);
-		Code.store(increment.getDesignator().obj);
-		
+	
+		//Code.store(increment.getDesignator().obj);
+		if (increment.getDesignator().obj.getName().endsWith("[]")) {
+			--Code.pc;
+			Code.put(Code.dup2);
+			Code.put(Code.aload);
+			Code.loadConst(1);
+			Code.put(Code.add);
+			Code.put(Code.astore);
+		}
+		else {
+			Code.loadConst(1);
+			Code.put(Code.add);
+			Code.store(increment.getDesignator().obj);
+		}
 	}
 	
 	public void visit(Decrement decrement) {
@@ -246,6 +254,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		
 	}
 	
+	int pcAfterGetStaticArray = 0;
 	public void visit(DesignatorName designatorName) {
 		Obj o = designatorName.obj;
         Code.load(designatorName.obj);
@@ -258,6 +267,7 @@ public class CodeGenerator extends VisitorAdaptor {
 			Code.load(arrIdentDesign.obj);
 		}
 	}
+	
 	public void visit (SubIdendDesign designator) {
 
 			Code.load(designator.obj);

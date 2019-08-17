@@ -14,6 +14,7 @@ parser code {:
     // slede redefinisani metodi za prijavu gresaka radi izmene teksta poruke
      
     public void report_fatal_error(String message, Object info) throws java.lang.Exception {
+      errorDetected = true;
       done_parsing();
       report_error(message, info);
     }
@@ -23,11 +24,12 @@ parser code {:
     }
   
     public void unrecovered_syntax_error(Symbol cur_token) throws java.lang.Exception {
+    	errorDetected = true;
         report_fatal_error("Fatalna greska, parsiranje se ne moze nastaviti", cur_token);
     }
 
     public void report_error(String message, Object info) {
-		errorDetected = true;
+		
     	StringBuilder msg = new StringBuilder(message); 
     	if (info instanceof Symbol)
             msg.append (" na liniji ").append(((Symbol)info).left);
@@ -56,18 +58,19 @@ terminal Integer NUMBER;
 terminal String CHAR;
 terminal String BOOL;
 
-nonterminal Statement,  Addop, Mulop, VarType, ConstType;
+nonterminal Statement, Addop, Mulop, VarType, ConstType, ActualPars, ActualParamList, DeclarationLists, AssignmentStatement;
 nonterminal DeclarationList, Declaration, ListVarDeclTypeList, VarDeclTypeList, VarDeclList, MethodDeclList;
 nonterminal ConstDeclList, EnumDeclList, VarDecl, EnumDecl, ConstDecl, StatementList, FormalParamList, FormPars, FormalParamDecl;
-nonterminal ActualPars, ActualParamList;
-
+ 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor;
 
 
-Program ::= (Program) PROG ProgName:p DeclarationList LBRACE MethodDeclList RBRACE;
+Program ::= (Program) PROG ProgName:p DeclarationLists LBRACE MethodDeclList RBRACE;
 
 ProgName ::= (ProgName) IDENT:progName;
+
+DeclarationLists ::= (DeclarationLists) DeclarationList;
 
 DeclarationList ::= (ProgDeclList) DeclarationList Declaration
 				|
@@ -94,8 +97,11 @@ VarType ::= (VarType)Type:typeName;
 
 VarDeclTypeList ::= (VarDeclarationTypeList) VarType:varType VarDeclList SEMI;
 
-VarDeclList ::= (VarDeclarations) VarDeclList COMMA VarDecl
+VarDeclList ::= (VarDeclarations) VarDeclList COMMA VarDecl		
 			|
+			(ErrorCommaStmt) error COMMA:l VarDeclList
+		   	{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);  :}
+		   	|
 			(SingleVarDeclaration) VarDecl
 			;
 
@@ -158,7 +164,7 @@ StatementList ::= (StmtDeclarations) StatementList Statement
 				(NoStmtDeclarations) /* epsilon */
 				;	
 						
-Statement ::= (DesignatorStmt) DesignatorStatement SEMI
+Statement ::= (DesignatorStmt) DesignatorStatement
 			| 
 			(ReadStmt) READ LPAREN Designator RPAREN SEMI
 			| 
@@ -170,14 +176,21 @@ Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
 			(ReturnNoExpr) RETURN SEMI
 			;
-
-DesignatorStatement ::= (Assignment) Designator:dest EQUAL Expr:e
+			
+		
+AssignmentStatement ::= (Assignment) Designator:dest EQUAL Expr:e SEMI
+				|
+				(ErrorAssignmentStmt) error SEMI:l
+		   		{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);  :}
+		   		;
+		   		
+DesignatorStatement ::=(AssignmentStmt) AssignmentStatement
 					|
-					(Increment) Designator:dest INC
+					(Increment) Designator:dest INC SEMI
 					|
-					(Decrement) Designator:dest DEC
+					(Decrement) Designator:dest DEC SEMI
 					|
-					(ProcCall) FuncName:name LPAREN ActualPars RPAREN
+					(ProcCall) FuncName:name LPAREN ActualPars RPAREN SEMI
 					;
 
 Expr ::= (NegExpr) MINUS SignedExpr:e

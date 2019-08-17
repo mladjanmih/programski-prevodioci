@@ -14,6 +14,7 @@ parser code {:
     // slede redefinisani metodi za prijavu gresaka radi izmene teksta poruke
      
     public void report_fatal_error(String message, Object info) throws java.lang.Exception {
+      errorDetected = true;
       done_parsing();
       report_error(message, info);
     }
@@ -23,11 +24,12 @@ parser code {:
     }
   
     public void unrecovered_syntax_error(Symbol cur_token) throws java.lang.Exception {
+    	errorDetected = true;
         report_fatal_error("Fatalna greska, parsiranje se ne moze nastaviti", cur_token);
     }
 
     public void report_error(String message, Object info) {
-		errorDetected = true;
+		
     	StringBuilder msg = new StringBuilder(message); 
     	if (info instanceof Symbol)
             msg.append (" na liniji ").append(((Symbol)info).left);
@@ -57,10 +59,14 @@ terminal String CHAR;
 terminal String BOOL;
 
 nonterminal Statement Statement;
-nonterminal  Addop Addop;
+nonterminal Addop Addop;
 nonterminal Mulop Mulop;
 nonterminal VarType VarType;
 nonterminal ConstType ConstType;
+nonterminal ActualPars ActualPars;
+nonterminal ActualParamList ActualParamList;
+nonterminal DeclarationLists DeclarationLists;
+nonterminal AssignmentStatement AssignmentStatement;
 nonterminal DeclarationList DeclarationList;
 nonterminal Declaration Declaration;
 nonterminal ListVarDeclTypeList ListVarDeclTypeList;
@@ -76,16 +82,16 @@ nonterminal StatementList StatementList;
 nonterminal FormalParamList FormalParamList;
 nonterminal FormPars FormPars;
 nonterminal FormalParamDecl FormalParamDecl;
-nonterminal ActualPars ActualPars;
-nonterminal ActualParamList ActualParamList;
-
+ 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor;
 
 
-Program ::= (Program) PROG ProgName:p DeclarationList:D1 LBRACE MethodDeclList:M2 RBRACE {: RESULT=new Program(p, D1, M2); RESULT.setLine(pleft); :};
+Program ::= (Program) PROG ProgName:p DeclarationLists:D1 LBRACE MethodDeclList:M2 RBRACE {: RESULT=new Program(p, D1, M2); RESULT.setLine(pleft); :};
 
 ProgName ::= (ProgName) IDENT:progName {: RESULT=new ProgName(progName); RESULT.setLine(progNameleft); :};
+
+DeclarationLists ::= (DeclarationLists) DeclarationList:D1 {: RESULT=new DeclarationLists(D1); RESULT.setLine(D1left); :};
 
 DeclarationList ::= (ProgDeclList) DeclarationList:D1 Declaration:D2 {: RESULT=new ProgDeclList(D1, D2); RESULT.setLine(D1left); :}
 				|
@@ -112,8 +118,11 @@ VarType ::= (VarType)Type:typeName {: RESULT=new VarType(typeName); RESULT.setLi
 
 VarDeclTypeList ::= (VarDeclarationTypeList) VarType:varType VarDeclList:V1 SEMI {: RESULT=new VarDeclarationTypeList(varType, V1); RESULT.setLine(varTypeleft); :};
 
-VarDeclList ::= (VarDeclarations) VarDeclList:V1 COMMA VarDecl:V2 {: RESULT=new VarDeclarations(V1, V2); RESULT.setLine(V1left); :}
+VarDeclList ::= (VarDeclarations) VarDeclList:V1 COMMA VarDecl:V2 {: RESULT=new VarDeclarations(V1, V2); RESULT.setLine(V1left); :}		
 			|
+			(ErrorCommaStmt) error COMMA:l VarDeclList
+		   	{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);:V1  :} {: RESULT=new ErrorCommaStmt(V1); RESULT.setLine(V1left); :}
+		   	|
 			(SingleVarDeclaration) VarDecl:V1 {: RESULT=new SingleVarDeclaration(V1); RESULT.setLine(V1left); :}
 			;
 
@@ -176,7 +185,7 @@ StatementList ::= (StmtDeclarations) StatementList:S1 Statement:S2 {: RESULT=new
 				(NoStmtDeclarations) {: RESULT=new NoStmtDeclarations(); :} /* epsilon */
 				;	
 						
-Statement ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new DesignatorStmt(D1); RESULT.setLine(D1left); :}
+Statement ::= (DesignatorStmt) DesignatorStatement:D1 {: RESULT=new DesignatorStmt(D1); RESULT.setLine(D1left); :}
 			| 
 			(ReadStmt) READ LPAREN Designator:D1 RPAREN SEMI {: RESULT=new ReadStmt(D1); RESULT.setLine(D1left); :}
 			| 
@@ -188,14 +197,21 @@ Statement ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new Designa
 			|
 			(ReturnNoExpr) RETURN SEMI {: RESULT=new ReturnNoExpr(); :}
 			;
-
-DesignatorStatement ::= (Assignment) Designator:dest EQUAL Expr:e {: RESULT=new Assignment(dest, e); RESULT.setLine(destleft); :}
+			
+		
+AssignmentStatement ::= (Assignment) Designator:dest EQUAL Expr:e SEMI {: RESULT=new Assignment(dest, e); RESULT.setLine(destleft); :}
+				|
+				(ErrorAssignmentStmt) error SEMI:l
+		   		{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);  :} {: RESULT=new ErrorAssignmentStmt(); :}
+		   		;
+		   		
+DesignatorStatement ::=(AssignmentStmt) AssignmentStatement:A1 {: RESULT=new AssignmentStmt(A1); RESULT.setLine(A1left); :}
 					|
-					(Increment) Designator:dest INC {: RESULT=new Increment(dest); RESULT.setLine(destleft); :}
+					(Increment) Designator:dest INC SEMI {: RESULT=new Increment(dest); RESULT.setLine(destleft); :}
 					|
-					(Decrement) Designator:dest DEC {: RESULT=new Decrement(dest); RESULT.setLine(destleft); :}
+					(Decrement) Designator:dest DEC SEMI {: RESULT=new Decrement(dest); RESULT.setLine(destleft); :}
 					|
-					(ProcCall) FuncName:name LPAREN ActualPars:A1 RPAREN {: RESULT=new ProcCall(name, A1); RESULT.setLine(nameleft); :}
+					(ProcCall) FuncName:name LPAREN ActualPars:A1 RPAREN SEMI {: RESULT=new ProcCall(name, A1); RESULT.setLine(nameleft); :}
 					;
 
 Expr ::= (NegExpr) MINUS SignedExpr:e {: RESULT=new NegExpr(e); RESULT.setLine(eleft); :}

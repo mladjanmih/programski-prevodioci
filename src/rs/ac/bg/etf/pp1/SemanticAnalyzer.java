@@ -17,6 +17,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	private static final String TRUE = "true";
 	private static final String FALSE = "false";
 	public static final Struct boolType = new Struct(Struct.Bool);
+	public static final String INDEX_VAR_NAME = "__index_temp_var";
 	//public static final Struct enumType = new Struct(Struct.Int);
 	
 	Logger log = Logger.getLogger(getClass());
@@ -49,6 +50,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Tab.insert(Obj.Type, "bool", boolType);
 		progName.obj = Tab.insert(Obj.Prog,  progName.getProgName(), Tab.noType);
 		Tab.openScope();
+//		Tab.insert(Obj.Var, INDEX_VAR_NAME, Tab.intType);
+//		nVars++;
 	}
 	
 	public void visit(Program program) {
@@ -56,6 +59,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Tab.chainLocalSymbols(program.getProgName().obj);
 		Tab.closeScope();
 	}
+	
+	//DECLARATION LIST
+	public void visit(DeclarationLists declarationLists) {
+		
+	}
+	
 	
 	
 	//===========================CONSTS====================================
@@ -335,6 +344,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		
 		ArrayList<Obj> pars = methodFormalPars.get(currentMethodCall.getName());
 		
+		if (pars == null) {
+			return;
+		}
+		
 		if (actParamNo == pars.size()) {
 			report_error("Greska na liniji " + actualParams.getLine() + " : Pozivu funkcije je prosledjeno vise paramatera od potrebnog broja!", null);
 			return;
@@ -353,6 +366,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 		
 		ArrayList<Obj> pars = methodFormalPars.get(currentMethodCall.getName());
+		
+		if (pars == null) {
+			return;
+		}
 		
 		if (actParamNo == pars.size()) {
 			report_error("Greska na liniji " + actualParam.getLine() + " : Pozivu funkcije je prosledjeno vise paramatera od potrebnog broja!", null);
@@ -648,7 +665,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			procCall.struct = func.getType();
 			
 			if (currentMethodCall != null) {
-				if (methodFormalPars.get(currentMethodCall.getName()).size() != actParamNo) {
+				ArrayList<Obj> pars = methodFormalPars.get(currentMethodCall.getName());
+				if (pars == null) 
+					return;
+				
+				if (pars.size() != actParamNo) {
 					report_error("Greska na liniji " + procCall.getLine() + " nije prosledjen dovoljan broj argumenata pozivu metode!", null);
 				}
 			}

@@ -64,12 +64,13 @@ import java_cup.runtime.Symbol;
 "]"			{ return new_symbol(sym.RBRACKET, yytext()); }
 "false"		{ return new_symbol(sym.BOOL, yytext()); }
 "true" 		{ return new_symbol(sym.BOOL, yytext()); }
+
 "//" {yybegin(COMMENT);}
 <COMMENT> . {yybegin(COMMENT);}
 <COMMENT> "\r\n" { yybegin(YYINITIAL); }
+
 [0-9]+  { return new_symbol(sym.NUMBER, new Integer (yytext())); }
 '[^']'					{ return new_symbol(sym.CHAR, yytext()); }
 ([a-z]|[A-Z])([a-z]|[A-Z]|[0-9]|[_])* 	{return new_symbol (sym.IDENT, yytext()); }
 
-'[0-9]([0-9])+'  { System.err.println("Leksicka greska ("+yytext()+") u liniji "+(yyline+1)); }
 . { System.err.println("Leksicka greska ("+yytext()+") u liniji "+(yyline+1)); }
