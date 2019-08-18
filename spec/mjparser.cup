@@ -175,13 +175,9 @@ Statement ::= (DesignatorStmt) DesignatorStatement
 			|
 			(ReturnNoExpr) RETURN SEMI
 			;
-			
-AssignmentDesignator ::= (AssignmentDesignator) Designator:dest
-						|
-						(AssignmentDesignatorError) error
-						;
+
 		   		
-DesignatorStatement ::=(Assignment) AssignmentDesignator:dest EQUAL Expr:e SEMI
+DesignatorStatement ::=(Assignment) Designator:dest EQUAL Expr:e SEMI
 					|
 					(Increment) Designator:dest INC SEMI
 					|
