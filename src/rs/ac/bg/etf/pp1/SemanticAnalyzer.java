@@ -388,7 +388,12 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			return;
 		}
 		
-		if (methodFormalPars.get(currentMethodCall.getName()).size() != 0) {
+		ArrayList<Obj> pars = methodFormalPars.get(currentMethodCall.getName());
+		if (pars == null) {
+			return;
+		}
+		
+		if (pars.size() != 0) {
 			report_error("Greska na liniji " + noActuals.getLine() + " : metoda " + currentMethodCall.getName() + " zahteva parametre!", null);
 		}
 	}
@@ -399,7 +404,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Obj obj = Tab.find(designator.getName());
 		if (obj == Tab.noObj) {
 			report_error("Greska na liniji " + designator.getLine() + " : ime " + designator.getName() + " nije deklarisano!", null);
-			designator.obj = new Obj(Obj.Meth, designator.getName(), Tab.noType);
+			designator.obj = Tab.noObj;
 		}
 		else {
 			if (obj.getKind() == obj.Type) {
@@ -484,37 +489,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	//===========================EXPR================================
 	public void visit(PosExpr posExpr) {
-//		ArrayUsageVisitor auv = new ArrayUsageVisitor();
-//		posExpr.traverseTopDown(auv);
-//		
-//		if (!auv.validExpression() && posExpr.getParent().getClass() != FuncCall.class && posExpr.getParent().getClass() != ProcCall.class) {
-//			report_error("Greska na liniji " + posExpr.getLine() + " : nije moguce koristiti refeerncu na niz u ovom izrazu!", null);
-//		}
-//		
-//		if (posExpr.getParent().getClass() == PrintStmt.class || posExpr.getParent().getClass() == PrintNumStmt.class) {
-//			if (auv.isArrayReference()) {
-//				report_error("Greska na liniji " + posExpr.getLine() + " : nije moguce koristiti referencu na niz u ovom izrazu!", null);
-//			}
-//		}
-		
-		
 		posExpr.struct = posExpr.getSignedExpr().struct;
 	}
 	
-	public void visit(NegExpr negExpr) {
-		//ArrayUsageVisitor auv = new ArrayUsageVisitor();
-		//negExpr.traverseTopDown(auv);
-		
-//		if (!auv.validExpression()) {
-//			report_error("Greska na liniji " + negExpr.getLine() + " : nije moguce koristiti referncu na niz u ovom izrazu!", null);
-//		}
-//		
-//		if (negExpr.getParent().getClass() == PrintStmt.class || negExpr.getParent().getClass() == PrintNumStmt.class) {
-//			if (auv.isArrayReference()) {
-//				report_error("Greska na liniji " + negExpr.getLine() + " : nije moguce koristiti referncu na niz u ovom izrazu!", null);
-//			}
-//		}
-		
+	public void visit(NegExpr negExpr) {		
 		negExpr.struct = negExpr.getSignedExpr().struct;
 	}
 	
@@ -527,14 +505,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(AddopExpr addopExpr) {
 		Struct te = addopExpr.getSignedExpr().struct;
 		Struct t = addopExpr.getTerm().struct;
-
-//		if (te.isRefType()) {
-//			te = te.getElemType();
-//		}
-//		if (t.isRefType()) {
-//			t = t.getElemType();
-//		}
-	
 		if ((te.equals(t) && ((te == Tab.intType) || (te == Tab.charType) || (te == boolType) || (isEnumType(te)))) || intEnumCompatible(t, te) || enumExpCompatible(t, te)) {
 			if (isEnumType(te))
 				addopExpr.struct = Tab.intType;
@@ -556,12 +526,6 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(MulopTerm mulopTerm) {
 		Struct mte = mulopTerm.getTerm().struct;
 		Struct mt = mulopTerm.getFactor().struct;
-//		if (mte.isRefType()) {
-//			mte = mte.getElemType();
-//		}
-//		else if (mt.isRefType()) {
-//			mt = mt.getElemType();
-//		}
 	
 		if ((mte.equals(mt) && ((mte == Tab.intType) || (mte == Tab.charType) || (mte == boolType) || (mte.getKind() == Struct.Int))) || intEnumCompatible(mt, mte) || enumExpCompatible(mt, mte)) {
 			if (isEnumType(mte))
@@ -613,6 +577,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public void visit(FuncCall funcCall) {
 		Obj func = funcCall.getFuncName().getDesignator().obj;
+		if (func == Tab.noObj) {
+			return;
+		}
+		
 		if (Obj.Meth == func.getKind()) {
 			if (Tab.noType == func.getType()) {
 				report_error("Greska na liniji " + funcCall.getLine() + " : Funkcija bez povratne vrednosti se ne moze koristiti u izrazima!", null);
@@ -636,15 +604,22 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 	}
 	
-	
+	public void visit(AssignmentExpr assignmentExpr) {
+		assignmentExpr.struct = assignmentExpr.getExpr().struct;
+	}
 	//======================DESIGNATOR STATEMENTS===================
 	public void visit(Assignment assignment) {
 		
 		if (assignment.getDesignator().obj.getKind() == Obj.Con) {
 			report_error("Greska na liniji " + assignment.getLine() + " : Vrednost konstanti se ne moze menjati!", null);
 		}
-		Struct exprType = assignment.getExpr().struct;
+		
+		Struct exprType = assignment.getAssignmentExpression().struct;
 		Struct destType = assignment.getDesignator().obj.getType();
+		
+		if (exprType == null || destType == null || exprType.getKind() == Struct.None || assignment.getDesignator().obj == Tab.noObj) {
+			return;
+		}
 		
 		if (exprType.isRefType() ^ destType.isRefType()) {
 			report_error("Greska na liniji " + assignment.getLine() + " : " + "Nekomaptibilni tipovi u dodeli vrednosti!", null);
@@ -682,6 +657,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	
 	public void visit(ProcCall procCall) {
 		Obj func = procCall.getFuncName().getDesignator().obj;
+		
+		if (func == Tab.noObj)
 		if (Obj.Meth == func.getKind()) {
 			report_info("Pronadjen poziv procedure " + procCall.getFuncName().getDesignator().obj.getName(), procCall);
 			

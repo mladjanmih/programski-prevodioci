@@ -58,12 +58,12 @@ terminal Integer NUMBER;
 terminal String CHAR;
 terminal String BOOL;
 
-nonterminal Statement, Addop, Mulop, VarType, ConstType, ActualPars, ActualParamList, DeclarationLists, AssignmentStatement;
+nonterminal Statement, Addop, Mulop, VarType, ConstType, ActualPars, ActualParamList, DeclarationLists;
 nonterminal DeclarationList, Declaration, ListVarDeclTypeList, VarDeclTypeList, VarDeclList, MethodDeclList;
 nonterminal ConstDeclList, EnumDeclList, VarDecl, EnumDecl, ConstDecl, StatementList, FormalParamList, FormPars, FormalParamDecl;
  
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor, AssignmentExpression;
 
 
 Program ::= (Program) PROG ProgName:p DeclarationLists LBRACE MethodDeclList RBRACE;
@@ -95,7 +95,11 @@ ListVarDeclTypeList ::= (ListVarDeclTypeLists) ListVarDeclTypeList VarDeclTypeLi
 					
 VarType ::= (VarType)Type:typeName;
 
-VarDeclTypeList ::= (VarDeclarationTypeList) VarType:varType VarDeclList SEMI;
+VarDeclTypeList ::= (VarDeclarationTypeList) VarType:varType VarDeclList SEMI
+				|
+				(ErrorNumDecl) error SEMI:l {: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);  :}
+				
+			;
 
 VarDeclList ::= (VarDeclarations) VarDeclList COMMA VarDecl				
 		   	|
@@ -175,9 +179,14 @@ Statement ::= (DesignatorStmt) DesignatorStatement
 			|
 			(ReturnNoExpr) RETURN SEMI
 			;
-
+			
+AssignmentExpression ::= (AssignmentExpr) Expr:e SEMI;
+						
 		   		
-DesignatorStatement ::=(Assignment) Designator:dest EQUAL Expr:e SEMI
+DesignatorStatement ::=(Assignment) Designator:dest EQUAL AssignmentExpression:e 
+					|
+					(AssignmentExprError) error SEMI:l 
+					{: parser.report_error("Izvrsen oporavak u liniji " + lleft, null);  :}	
 					|
 					(Increment) Designator:dest INC SEMI
 					|

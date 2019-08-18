@@ -15,10 +15,9 @@
 				<exclude name="MyDumpSymbolTableVisitor.java" />
 
 			</fileset>
-			<fileset dir="spec">
+			<fileset dir="src/spec">
 				<exclude name="mjlexer.lex"/>
 				<exclude name="mjparser.cup"/>
-				<exclude name="mjparser_old.cup"/>
 			</fileset>
 		</delete>
 	</target>
@@ -27,7 +26,7 @@
 		<java jar="lib/JFlex.jar" fork="true">
 			<arg value="-d"/>
 			<arg value="./src/rs/ac/bg/etf/pp1"/>
-			<arg value="spec/mjlexer.lex"/>
+			<arg value="src/spec/mjlexer.lex"/>
 		</java>
 	</target>
 
@@ -41,7 +40,7 @@
 			<arg value="MJParser"/>
 			<arg value="-dump" />
 			<arg value="-buildtree"/>
-			<arg value="spec/mjparser.cup"/>
+			<arg value="src/spec/mjparser.cup"/>
 		</java>
 	</target>
 

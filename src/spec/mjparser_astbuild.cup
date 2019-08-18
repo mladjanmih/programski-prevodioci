@@ -66,7 +66,6 @@ nonterminal ConstType ConstType;
 nonterminal ActualPars ActualPars;
 nonterminal ActualParamList ActualParamList;
 nonterminal DeclarationLists DeclarationLists;
-nonterminal AssignmentStatement AssignmentStatement;
 nonterminal DeclarationList DeclarationList;
 nonterminal Declaration Declaration;
 nonterminal ListVarDeclTypeList ListVarDeclTypeList;
@@ -84,7 +83,7 @@ nonterminal FormPars FormPars;
 nonterminal FormalParamDecl FormalParamDecl;
  
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor, AssignmentExpression;
 
 
 Program ::= (Program) PROG ProgName:p DeclarationLists:D1 LBRACE MethodDeclList:M2 RBRACE {: RESULT=new Program(p, D1, M2); RESULT.setLine(pleft); :};
@@ -116,7 +115,11 @@ ListVarDeclTypeList ::= (ListVarDeclTypeLists) ListVarDeclTypeList:L1 VarDeclTyp
 					
 VarType ::= (VarType)Type:typeName {: RESULT=new VarType(typeName); RESULT.setLine(typeNameleft); :};
 
-VarDeclTypeList ::= (VarDeclarationTypeList) VarType:varType VarDeclList:V1 SEMI {: RESULT=new VarDeclarationTypeList(varType, V1); RESULT.setLine(varTypeleft); :};
+VarDeclTypeList ::= (VarDeclarationTypeList) VarType:varType VarDeclList:V1 SEMI {: RESULT=new VarDeclarationTypeList(varType, V1); RESULT.setLine(varTypeleft); :}
+				|
+				(ErrorNumDecl) error SEMI:l {: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);  :} {: RESULT=new ErrorNumDecl(); :}
+				
+			;
 
 VarDeclList ::= (VarDeclarations) VarDeclList:V1 COMMA VarDecl:V2 {: RESULT=new VarDeclarations(V1, V2); RESULT.setLine(V1left); :}				
 		   	|
@@ -197,14 +200,13 @@ Statement ::= (DesignatorStmt) DesignatorStatement:D1 {: RESULT=new DesignatorSt
 			(ReturnNoExpr) RETURN SEMI {: RESULT=new ReturnNoExpr(); :}
 			;
 			
-		
-AssignmentStatement ::= (Assignment) Designator:dest EQUAL Expr:e SEMI {: RESULT=new Assignment(dest, e); RESULT.setLine(destleft); :}
-				|
-				(ErrorAssignmentStmt) error SEMI:l
-		   		{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);  :} {: RESULT=new ErrorAssignmentStmt(); :}
-		   		;
+AssignmentExpression ::= (AssignmentExpr) Expr:e SEMI {: RESULT=new AssignmentExpr(e); RESULT.setLine(eleft); :};
+						
 		   		
-DesignatorStatement ::=(AssignmentStmt) AssignmentStatement:A1 {: RESULT=new AssignmentStmt(A1); RESULT.setLine(A1left); :}
+DesignatorStatement ::=(Assignment) Designator:dest EQUAL AssignmentExpression:e {: RESULT=new Assignment(dest, e); RESULT.setLine(destleft); :} 
+					|
+					(AssignmentExprError) error SEMI:l 
+					{: parser.report_error("Izvrsen oporavak u liniji " + lleft, null);  :} {: RESULT=new AssignmentExprError(); :}	
 					|
 					(Increment) Designator:dest INC SEMI {: RESULT=new Increment(dest); RESULT.setLine(destleft); :}
 					|
