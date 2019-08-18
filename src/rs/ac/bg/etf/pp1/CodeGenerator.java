@@ -175,7 +175,18 @@ public class CodeGenerator extends VisitorAdaptor {
 		assignment.traverseTopDown(visitor);
 		
 		if (visitor.isNewArrayExpr()) {
-			Code.put(Code.putstatic); Code.put2(assignment.getDesignator().obj.getAdr()); 	
+			Obj o = assignment.getDesignator().obj;
+			if (o.getLevel() == 0) {
+				Code.put(Code.putstatic); Code.put2(assignment.getDesignator().obj.getAdr()); 	
+			}
+			else {
+				if (0 <= o.getAdr() && o.getAdr() <= 3) 
+		            Code.put(Code.store_n + o.getAdr());
+		        else { 
+		        	  Code.put(Code.store); Code.put(o.getAdr()); 
+		        }
+			}
+			
 		}
 		else
 		{
@@ -184,6 +195,7 @@ public class CodeGenerator extends VisitorAdaptor {
 			        else Code.put(Code.astore);
 			}
 			else {
+				
 				Code.store(assignment.getDesignator().obj);
 			}
 		}

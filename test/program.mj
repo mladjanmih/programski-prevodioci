@@ -7,15 +7,28 @@ program test301
 
 	int niz[];
 	char nizch[];
-	char t = 5, f;
+	
 {
+	void printic() {
+		print(pet);
+	}
 
 	void main()	
-		int bodovi;
-		Broj nula, jedan;
+		int bodov i, dva;
+		Broj nula, jedana;
+		Broj pet[];
 	{
-		bodovi = * 3;
-		bodovi++;
+		dva = 2;
+		//bodovi =  3;
+	//	bodovi++;
+		//niz = new int[4];
+	//	niz[3] = 3;
+		//niz[4] = 4;
+		pet = new Broj[12];
+		pet[3] = Broj.DESET;
+		print(pet[Broj.JEDAN + 2]);
+		printic();
+		print(jedan);
 	//	niz[0] = 0;
 	//	niz[0]++;
 	//	print(niz[0]);

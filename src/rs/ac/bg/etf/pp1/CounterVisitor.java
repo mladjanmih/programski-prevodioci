@@ -31,5 +31,6 @@ public class CounterVisitor extends VisitorAdaptor {
 		public void visit(VarDeclArray varDeclArray) {
 			count++;
 		}
+	
 	}
 }

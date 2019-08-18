@@ -118,17 +118,16 @@ VarType ::= (VarType)Type:typeName {: RESULT=new VarType(typeName); RESULT.setLi
 
 VarDeclTypeList ::= (VarDeclarationTypeList) VarType:varType VarDeclList:V1 SEMI {: RESULT=new VarDeclarationTypeList(varType, V1); RESULT.setLine(varTypeleft); :};
 
-VarDeclList ::= (VarDeclarations) VarDeclList:V1 COMMA VarDecl:V2 {: RESULT=new VarDeclarations(V1, V2); RESULT.setLine(V1left); :}		
-			|
-			(ErrorCommaStmt) error COMMA:l VarDeclList
-		   	{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);:V1  :} {: RESULT=new ErrorCommaStmt(V1); RESULT.setLine(V1left); :}
+VarDeclList ::= (VarDeclarations) VarDeclList:V1 COMMA VarDecl:V2 {: RESULT=new VarDeclarations(V1, V2); RESULT.setLine(V1left); :}				
 		   	|
-			(SingleVarDeclaration) VarDecl:V1 {: RESULT=new SingleVarDeclaration(V1); RESULT.setLine(V1left); :}
+			(SingleVarDeclaration) VarDecl:V1 {: RESULT=new SingleVarDeclaration(V1); RESULT.setLine(V1left); :}	
 			;
 
 VarDecl ::= (SingleVarDecl) IDENT:varName {: RESULT=new SingleVarDecl(varName); RESULT.setLine(varNameleft); :}
 			|
-			(VarDeclArray) IDENT:varName LBRACKET RBRACKET {: RESULT=new VarDeclArray(varName); RESULT.setLine(varNameleft); :}
+			(VarDeclArray) IDENT:varName LBRACKET RBRACKET {: RESULT=new VarDeclArray(varName); RESULT.setLine(varNameleft); :} 
+			|
+			(ErrorDecl) error:l  {: parser.report_error("Izvrsen oporavak u liniji " + lleft, null);  :} {: RESULT=new ErrorDecl(); :}
 			;
 
 EnumDeclList ::= (EnumDeclarations) EnumDeclList:E1 COMMA EnumDecl:E2 {: RESULT=new EnumDeclarations(E1, E2); RESULT.setLine(E1left); :}

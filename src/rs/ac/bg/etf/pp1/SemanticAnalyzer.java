@@ -281,7 +281,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			currentMethod = Tab.insert(Obj.Meth,  methodVoidTypeName.getMethName(), Tab.noType);
 			methodVoidTypeName.obj = currentMethod;
 			Tab.openScope();
-			report_info("Obradjuje se funkcija " + methodVoidTypeName.getMethName(), methodVoidTypeName);
+			report_info("Deklarisana funkcija " + methodVoidTypeName.getMethName(), methodVoidTypeName);
 			methodFormalPars.put(methodVoidTypeName.getMethName(), new ArrayList<Obj>());
 		}
 	}
@@ -407,6 +407,18 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				designator.obj = Tab.noObj;
 			}
 			else {
+				
+				if (obj.getKind() == Obj.Var) {
+					if (obj.getLevel() == 0) {
+						report_info("Detektovano koriscenje globalne promenljive " + obj.getName(), designator);
+					}
+					else {
+						report_info("Detektovano koriscenje lokalne promenljive " + obj.getName(), designator);	
+					}
+				} else if (obj.getKind() == Obj.Con) {
+					report_info("Detektovano koriscenje kontsante " + obj.getName(), designator);
+				}
+				
 				designator.obj = obj;
 			}
 		}
@@ -438,6 +450,8 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			designator.obj = Tab.noObj;
 			return;
 		}
+		
+		report_info("Detektovano koriscenje enum konstante " + designator.getName() + "." + designator.getSubName(), designator);
 		designator.obj = enumerator;
 	}
 	
@@ -453,6 +467,14 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 		
 		designator.obj = obj;
+		if (obj.getKind() == Obj.Var) {
+			if (obj.getLevel() == 0) {
+				report_info("Detektovano koriscenje globalne promenljive " + designator.getDesignatorName().obj.getName(), designator);
+			}
+			else {
+				report_info("Detektovano koriscenje lokalne promenljive " + designator.getDesignatorName().obj.getName(), designator);	
+			}
+		}
 		
 		if (!designator.getExpr().struct.compatibleWith(Tab.intType) && !isEnumType(designator.getExpr().struct)) {
 			report_error("Greska na liniji " + designator.getLine() + " : nekompatibilan tip u izrazu za indeksiranje!", null);
@@ -596,7 +618,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 				report_error("Greska na liniji " + funcCall.getLine() + " : Funkcija bez povratne vrednosti se ne moze koristiti u izrazima!", null);
 			}
 			
-			report_info("Pronadjen poziv funkcije " + funcCall.getLine() + " na liniji " + funcCall.getLine(), null);
+			report_info("Pronadjen poziv funkcije " + funcCall.getFuncName().getDesignator().obj.getName(), funcCall);
 			funcCall.struct = func.getType();
 			if (currentMethodCall != null) {
 				if (methodFormalPars.get(currentMethodCall.getName()).size() != actParamNo) {
@@ -661,18 +683,17 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(ProcCall procCall) {
 		Obj func = procCall.getFuncName().getDesignator().obj;
 		if (Obj.Meth == func.getKind()) {
-			report_info("Pronadjen poziv procedure " + procCall.getLine() + " na liniji " + procCall.getLine(), null);
-			procCall.struct = func.getType();
+			report_info("Pronadjen poziv procedure " + procCall.getFuncName().getDesignator().obj.getName(), procCall);
 			
+			procCall.struct = func.getType();
 			if (currentMethodCall != null) {
-				ArrayList<Obj> pars = methodFormalPars.get(currentMethodCall.getName());
-				if (pars == null) 
-					return;
-				
-				if (pars.size() != actParamNo) {
-					report_error("Greska na liniji " + procCall.getLine() + " nije prosledjen dovoljan broj argumenata pozivu metode!", null);
+				if (methodFormalPars.get(currentMethodCall.getName()).size() != actParamNo) {
+					report_error("Greska na liniji " + procCall.getLine() + " nije prosledjen dovoljan broj argumenata pozivu procedure!", null);
 				}
 			}
+			
+			currentMethodCall = null;
+			actParamNo = 0;
 		} 
 		else {
 			//TODO: Dobijes noObj kao ime funkcije kada funkcija nije deklarisana

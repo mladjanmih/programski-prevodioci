@@ -97,17 +97,16 @@ VarType ::= (VarType)Type:typeName;
 
 VarDeclTypeList ::= (VarDeclarationTypeList) VarType:varType VarDeclList SEMI;
 
-VarDeclList ::= (VarDeclarations) VarDeclList COMMA VarDecl		
-			|
-			(ErrorCommaStmt) error COMMA:l VarDeclList
-		   	{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);  :}
+VarDeclList ::= (VarDeclarations) VarDeclList COMMA VarDecl				
 		   	|
-			(SingleVarDeclaration) VarDecl
+			(SingleVarDeclaration) VarDecl	
 			;
 
 VarDecl ::= (SingleVarDecl) IDENT:varName
 			|
-			(VarDeclArray) IDENT:varName LBRACKET RBRACKET
+			(VarDeclArray) IDENT:varName LBRACKET RBRACKET 
+			|
+			(ErrorDecl) error:l  {: parser.report_error("Izvrsen oporavak u liniji " + lleft, null);  :}
 			;
 
 EnumDeclList ::= (EnumDeclarations) EnumDeclList COMMA EnumDecl
@@ -177,14 +176,12 @@ Statement ::= (DesignatorStmt) DesignatorStatement
 			(ReturnNoExpr) RETURN SEMI
 			;
 			
-		
-AssignmentStatement ::= (Assignment) Designator:dest EQUAL Expr:e SEMI
-				|
-				(ErrorAssignmentStmt) error SEMI:l
-		   		{: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);  :}
-		   		;
+AssignmentDesignator ::= (AssignmentDesignator) Designator:dest
+						|
+						(AssignmentDesignatorError) error
+						;
 		   		
-DesignatorStatement ::=(AssignmentStmt) AssignmentStatement
+DesignatorStatement ::=(Assignment) AssignmentDesignator:dest EQUAL Expr:e SEMI
 					|
 					(Increment) Designator:dest INC SEMI
 					|
