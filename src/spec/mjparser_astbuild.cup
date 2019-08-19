@@ -66,6 +66,7 @@ nonterminal ConstType ConstType;
 nonterminal ActualPars ActualPars;
 nonterminal ActualParamList ActualParamList;
 nonterminal DeclarationLists DeclarationLists;
+nonterminal MinusSign MinusSign;
 nonterminal DeclarationList DeclarationList;
 nonterminal Declaration Declaration;
 nonterminal ListVarDeclTypeList ListVarDeclTypeList;
@@ -215,7 +216,9 @@ DesignatorStatement ::=(Assignment) Designator:dest EQUAL AssignmentExpression:e
 					(ProcCall) FuncName:name LPAREN ActualPars:A1 RPAREN SEMI {: RESULT=new ProcCall(name, A1); RESULT.setLine(nameleft); :}
 					;
 
-Expr ::= (NegExpr) MINUS SignedExpr:e {: RESULT=new NegExpr(e); RESULT.setLine(eleft); :}
+MinusSign ::= (MinusSign) MINUS {: RESULT=new MinusSign(); :};
+
+Expr ::= (NegExpr) MinusSign:ms SignedExpr:e {: RESULT=new NegExpr(ms, e); RESULT.setLine(msleft); :}
 			|
 			(PosExpr) SignedExpr:e {: RESULT=new PosExpr(e); RESULT.setLine(eleft); :}
 			;

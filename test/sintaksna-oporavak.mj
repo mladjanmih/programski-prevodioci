@@ -1,0 +1,25 @@
+program sintaksnaOporavak
+	enum Broj { NULA, JEDAN, PET=5, DESET=10}
+
+	const int jedan = 1;
+	const int pet = 5;
+
+	int  re e, niz[], a, f f;
+	char nizch[];
+	
+{
+	void printic() {
+		print(pet);
+	}
+
+	void main()	
+		int bodovi, dva;
+		Broj nula, jedana;
+		Broj pet[];
+	{
+		niz = new int[5];
+		a = 1;		
+		a = 2 3;
+		niz[a] = 1;
+	}
+}

@@ -17,6 +17,7 @@ public class CodeGenerator extends VisitorAdaptor {
 	private static final String TRUE = "true";
 	private static final String FALSE = "false";
 	private boolean returnFound = false;
+	private int negativeExpressionDepth = 0;
 	public int getMainPc() {
 		return mainPc;
 	}
@@ -238,7 +239,7 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	//==================EXPR=====================
 	public void visit(NegExpr negExpr) {
-		Code.put(Code.neg);
+//		Code.put(Code.neg);
 	}
 	
 	
@@ -287,6 +288,19 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	//==================FACTORS====================
+	
+	public void visit(FactorTerm factorTerm) {
+		if (negativeExpressionDepth > 0) {
+			Code.put(Code.neg);
+			--negativeExpressionDepth;
+		}
+	}
+	
+	public void visit(MinusSign minusSign) {
+		++negativeExpressionDepth;
+	}
+
+	
 	public void visit(FuncCall funcCall) {
 		Obj functionObj = funcCall.getFuncName().getDesignator().obj;
 		int offset = functionObj.getAdr() - Code.pc;

@@ -1,31 +1,26 @@
 program ispravno
 	int niz[];
 	char a;
+	enum Broj {PET = 5} 
 {
-	void printic(char a, int b) {
-		print(a, b);
-	}
-
 	int inc(int a) {
 		return 1 + a;
 	}
-
+	
+	Broj brojPet() {
+		return Broj.PET;
+	}
+	
 	void main()	
-		char g;
-		int bodovi, dva;
+		int f;
+		Broj broj;
 	{
-		niz = new int[2];
-		niz[0] = -1;
-		niz[1] = (-5) + (-5);
-		a = -'a' + '5';
-		print(niz[1]);
-	//print(inc(inc(inc(inc(-niz[0])))));	
+		broj = brojPet();
+		print(broj);
+		//f = true * false;
 		
-		//boja = Boja.CRVENA;
-		//print(boja);
-		//boja = Broj.JEDAN;
-		//g = jedan;
-		//g = 'a';
-		//printic(jedan,g);
+		//niz = new int[2];
+		//niz[1] = -5 * 2 + (-inc(-5) + 20);
+		//print(niz[1]);
 	}
 }

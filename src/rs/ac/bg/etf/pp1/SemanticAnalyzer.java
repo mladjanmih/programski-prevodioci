@@ -26,6 +26,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	boolean returnFound = false;
 	boolean errorDetected = false;
 	int nVars;
+	//int negativeExpressionDepth = 0;
 	
 	public void report_error(String message, SyntaxNode info) {
 		errorDetected = true;
@@ -492,7 +493,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		posExpr.struct = posExpr.getSignedExpr().struct;
 	}
 	
-	public void visit(NegExpr negExpr) {		
+ 	
+	public void visit(NegExpr negExpr) {
+		if (negExpr.getSignedExpr().struct != Tab.intType && !isEnumType(negExpr.getSignedExpr().struct)) {
+			report_error("Greska na liniji " + negExpr.getLine() + " : nedozvoljen izraz!", null);
+		}
 		negExpr.struct = negExpr.getSignedExpr().struct;
 	}
 	
@@ -505,7 +510,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	public void visit(AddopExpr addopExpr) {
 		Struct te = addopExpr.getSignedExpr().struct;
 		Struct t = addopExpr.getTerm().struct;
-		if ((te.equals(t) && ((te == Tab.intType) || (te == Tab.charType) || (te == boolType) || (isEnumType(te)))) || intEnumCompatible(t, te) || enumExpCompatible(t, te)) {
+		if ((te.equals(t) && ((te == Tab.intType) || (isEnumType(te)))) || intEnumCompatible(t, te) || enumExpCompatible(t, te)) {
 			if (isEnumType(te))
 				addopExpr.struct = Tab.intType;
 			else	
@@ -527,7 +532,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		Struct mte = mulopTerm.getTerm().struct;
 		Struct mt = mulopTerm.getFactor().struct;
 	
-		if ((mte.equals(mt) && ((mte == Tab.intType) || (mte == Tab.charType) || (mte == boolType) || (mte.getKind() == Struct.Int))) || intEnumCompatible(mt, mte) || enumExpCompatible(mt, mte)) {
+		if ((mte.equals(mt) && ((mte == Tab.intType) || (isEnumType(mte)))) || intEnumCompatible(mt, mte) || enumExpCompatible(mt, mte)) {
 			if (isEnumType(mte))
 				mulopTerm.struct = Tab.intType;
 			else

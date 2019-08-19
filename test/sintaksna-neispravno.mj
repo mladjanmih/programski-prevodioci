@@ -1,0 +1,16 @@
+
+program sintaksnaNeispravno
+	int  niz[], a;	
+{
+	void printic(pet) {
+		print(pet);
+	}
+
+	void main()	
+	{
+		niz = new int[5];
+		a = 1;		
+		a = 2 3;
+		niz[a] = 1;
+	}
+}

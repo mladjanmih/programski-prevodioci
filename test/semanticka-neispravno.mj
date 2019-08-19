@@ -1,0 +1,24 @@
+program semantickaNeispravno
+	const int jedan = 1;
+	int jedan;	
+	
+	enum Broj {NULA, JEDAN, DVA, TRI, CETIRI }
+	enum Boja {CRVENA, PLAVA, CRNA, BELA }
+{
+	void printic(char a, int b) {
+		print(a, b);
+	}
+
+	void main()	
+		char g;
+		int bodovi, dva;
+		Boja boja;
+	{
+		boja = Boja.CRVENA;
+		print(boja);
+		boja = Broj.JEDAN;
+		g = jedan;
+		g = 'a';
+		printic(jedan,g);
+	}
+}

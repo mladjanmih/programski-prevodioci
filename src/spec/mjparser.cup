@@ -58,7 +58,7 @@ terminal Integer NUMBER;
 terminal String CHAR;
 terminal String BOOL;
 
-nonterminal Statement, Addop, Mulop, VarType, ConstType, ActualPars, ActualParamList, DeclarationLists;
+nonterminal Statement, Addop, Mulop, VarType, ConstType, ActualPars, ActualParamList, DeclarationLists, MinusSign;
 nonterminal DeclarationList, Declaration, ListVarDeclTypeList, VarDeclTypeList, VarDeclList, MethodDeclList;
 nonterminal ConstDeclList, EnumDeclList, VarDecl, EnumDecl, ConstDecl, StatementList, FormalParamList, FormPars, FormalParamDecl;
  
@@ -195,7 +195,9 @@ DesignatorStatement ::=(Assignment) Designator:dest EQUAL AssignmentExpression:e
 					(ProcCall) FuncName:name LPAREN ActualPars RPAREN SEMI
 					;
 
-Expr ::= (NegExpr) MINUS SignedExpr:e
+MinusSign ::= (MinusSign) MINUS;
+
+Expr ::= (NegExpr) MinusSign:ms SignedExpr:e
 			|
 			(PosExpr) SignedExpr:e
 			;
