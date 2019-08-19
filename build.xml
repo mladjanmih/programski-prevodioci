@@ -79,5 +79,13 @@
 			</classpath>
 		</java>
 	</target>
-
+	
+	<target name="sintaksnaOporavakRun" depends="disasm" >
+		<java classname="rs.etf.pp1.mj.runtime.Run">
+			<arg value="test/program.obj"/>
+			<classpath>
+				<pathelement location="lib/mj-runtime-1.1.jar"/>
+			</classpath>
+		</java>
+	</target>
 </project>

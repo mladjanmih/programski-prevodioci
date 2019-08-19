@@ -1,30 +1,31 @@
-program test301
-
-	enum Broj { NULA, JEDAN, PET=5, DESET=10}
-
-	const int jedan = 1;
-	const int pet = 5;
-
-	int  re e, niz[];
-	char nizch[];
-	
+program ispravno
+	int niz[];
+	char a;
 {
-	void printic() {
-		print(pet);
+	void printic(char a, int b) {
+		print(a, b);
+	}
+
+	int inc(int a) {
+		return 1 + a;
 	}
 
 	void main()	
+		char g;
 		int bodovi, dva;
-		Broj nula, jedana;
-		Broj pet[];
 	{
-
-	//	pet = new Broj[12];
-	//	pet[3] = Broj.DESET;
-	//	print(pet[Broj.JEDAN + 2]);
-	//	printic();
-	//	print(jedan);
+		niz = new int[2];
+		niz[0] = -1;
+		niz[1] = (-5) + (-5);
+		a = -'a' + '5';
+		print(niz[1]);
+	//print(inc(inc(inc(inc(-niz[0])))));	
 		
-		pet = c c;
+		//boja = Boja.CRVENA;
+		//print(boja);
+		//boja = Broj.JEDAN;
+		//g = jedan;
+		//g = 'a';
+		//printic(jedan,g);
 	}
 }
