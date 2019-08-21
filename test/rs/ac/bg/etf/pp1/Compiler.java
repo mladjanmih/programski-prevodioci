@@ -60,6 +60,7 @@ public class Compiler {
 				}
 				
 				CodeGenerator codeGenerator = new CodeGenerator();
+				initializePredefinedMethods();
 				prog.traverseBottomUp(codeGenerator);
 				Code.dataSize = v.nVars;
 				Code.mainPc = codeGenerator.getMainPc();
@@ -71,6 +72,23 @@ public class Compiler {
 		finally {
 			if (br != null) try { br.close(); } catch (IOException e1) { log.error(e1.getMessage(), e1); }
 		}
+	}
+	
+	private static void initializePredefinedMethods() {
+		Code.put(Code.enter);
+		Code.put(1);
+		Code.put(1);
+		Code.put(Code.load_n);
+		Code.put(Code.exit);
+		Code.put(Code.return_);
+
+		Code.put(Code.enter);
+		Code.put(1);
+		Code.put(1);
+		Code.put(Code.load_n);
+		Code.put(Code.arraylength);
+		Code.put(Code.exit);
+		Code.put(Code.return_);
 	}
 	
 	public static void tsdump() {

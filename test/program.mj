@@ -16,10 +16,13 @@ program ispravno
 		Broj broj;
 	{
 		broj = brojPet();
+		print(chr(97));
+
 		print(broj);
 		//f = true * false;
-		
-		//niz = new int[2];
+		niz = new int[21635465];
+		print(len(niz));
+		//
 		//niz[1] = -5 * 2 + (-inc(-5) + 20);
 		//print(niz[1]);
 	}

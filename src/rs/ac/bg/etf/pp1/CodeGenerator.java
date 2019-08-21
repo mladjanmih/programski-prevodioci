@@ -31,8 +31,7 @@ public class CodeGenerator extends VisitorAdaptor {
 			msg.append (" na liniji ").append(line);
 		log.info(msg.toString());
 	}
-	
-	
+
 	//===================METHODS===================
 	public void visit(MethodVoidTypeName methodVoidTypeName) {
 		methodVoidTypeName.obj.setAdr(Code.pc);
@@ -204,7 +203,15 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	public void visit(ProcCall procCall) {
 		Obj functionObj = procCall.getFuncName().getDesignator().obj;
-		int offset = functionObj.getAdr() - Code.pc;
+		int offset = 0;
+		
+		if ("ord".equals(functionObj.getName()) || "chr".equals(functionObj.getName()))
+			offset = 0 - Code.pc;
+		else if ("len".equals(functionObj.getName())) {
+			offset = 6 - Code.pc;
+		}
+		else
+			offset = functionObj.getAdr() - Code.pc;
 		Code.put(Code.call);
 		Code.put2(offset);
 		
@@ -303,7 +310,14 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	public void visit(FuncCall funcCall) {
 		Obj functionObj = funcCall.getFuncName().getDesignator().obj;
-		int offset = functionObj.getAdr() - Code.pc;
+		int offset = 0;
+		if ("ord".equals(functionObj.getName()) || "chr".equals(functionObj.getName()))
+			offset = 0 - Code.pc;
+		else if ("len".equals(functionObj.getName())) {
+			offset = 6 - Code.pc;
+		}
+		else
+			offset = functionObj.getAdr() - Code.pc;
 		Code.put(Code.call);
 		Code.put2(offset);
 	}

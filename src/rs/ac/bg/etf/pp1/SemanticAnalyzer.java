@@ -28,6 +28,21 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 	int nVars;
 	//int negativeExpressionDepth = 0;
 	
+	public SemanticAnalyzer() {
+		methodFormalPars = new HashMap<String, ArrayList<Obj>>();
+		ArrayList<Obj> list = new ArrayList<Obj>();
+		list.add(new Obj(Obj.Var, "expr", Tab.intType));
+		methodFormalPars.put("chr", list);
+	
+		list = new ArrayList<Obj>();
+		list.add(new Obj(Obj.Var, "chr", Tab.charType));
+		methodFormalPars.put("ord", list);
+		
+		list = new ArrayList<Obj>();
+		list.add(new Obj(Obj.Var, "arr", Tab.noType));
+		methodFormalPars.put("len", list);
+	}
+	
 	public void report_error(String message, SyntaxNode info) {
 		errorDetected = true;
 		StringBuilder msg = new StringBuilder(message);
@@ -355,9 +370,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		}
 		
 		Obj par = pars.get(actParamNo++);
+		
 		if (!par.getType().compatibleWith(actualParams.getExpr().struct) && !enumAssignable(par.getType(), actualParams.getExpr().struct)) {
-			//if (!(actualParams.getExpr().struct.getElemType() != null && par.getType().compatibleWith(actualParams.getExpr().struct.getElemType()))) 
-				report_error("Greska na liniji " + actualParams.getLine() + " : Tip prosledjenog parametra nije kompatibilan sa tipom parametra funkcije!", null);
+			if (!("len".equals(currentMethodCall.getName()) && actualParams.getExpr().struct.isRefType()))
+					report_error("Greska na liniji " + actualParams.getLine() + " : Tip prosledjenog parametra nije kompatibilan sa tipom parametra funkcije!", null);
 		}
 	}
 	
@@ -379,7 +395,7 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		
 		Obj par = pars.get(actParamNo++);
 		if (!par.getType().compatibleWith(actualParam.getExpr().struct) && !enumAssignable(par.getType(), actualParam.getExpr().struct)) {
-			//if (!(actualParam.getExpr().struct.getElemType() != null && par.getType().compatibleWith(actualParam.getExpr().struct.getElemType()))) 
+			if (!("len".equals(currentMethodCall.getName()) && actualParam.getExpr().struct.isRefType()))
 				report_error("Greska na liniji " + actualParam.getLine() + " : Tip prosledjenog parametra nije kompatibilan sa tipom parametra funkcije!", null);
 		}
 	}
@@ -594,8 +610,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			report_info("Pronadjen poziv funkcije " + funcCall.getFuncName().getDesignator().obj.getName(), funcCall);
 			funcCall.struct = func.getType();
 			if (currentMethodCall != null) {
-				if (methodFormalPars.get(currentMethodCall.getName()).size() != actParamNo) {
-					report_error("Greska na liniji " + funcCall.getLine() + " nije prosledjen dovoljan broj argumenata pozivu funkcije!", null);
+				ArrayList<Obj> pars = methodFormalPars.get(currentMethodCall.getName());
+				if (pars != null) {
+					if (methodFormalPars.get(currentMethodCall.getName()).size() != actParamNo) {
+						report_error("Greska na liniji " + funcCall.getLine() + " nije prosledjen dovoljan broj argumenata pozivu funkcije!", null);
+					}
 				}
 			}
 			
@@ -669,8 +688,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			
 			procCall.struct = func.getType();
 			if (currentMethodCall != null) {
-				if (methodFormalPars.get(currentMethodCall.getName()).size() != actParamNo) {
-					report_error("Greska na liniji " + procCall.getLine() + " nije prosledjen dovoljan broj argumenata pozivu procedure!", null);
+				ArrayList<Obj> pars = methodFormalPars.get(currentMethodCall.getName());
+				if (pars != null) {
+					if (methodFormalPars.get(currentMethodCall.getName()).size() != actParamNo) {
+						report_error("Greska na liniji " + procCall.getLine() + " nije prosledjen dovoljan broj argumenata pozivu procedure!", null);
+					}
 				}
 			}
 			
