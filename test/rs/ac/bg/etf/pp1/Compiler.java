@@ -67,6 +67,10 @@ public class Compiler {
 				Code.write(new FileOutputStream(objFile));
 				log.info("Parsiranje uspesno zavrseno.");
 			}
+			else {
+				log.error("Parsiranje nije uspesno zavrseno.");
+				return;
+			}
 		}
 	
 		finally {

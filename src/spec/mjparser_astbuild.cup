@@ -51,7 +51,7 @@ scan with {:
 
 
 terminal READ, PRINT, NEW, RETURN, INC, DEC, EQUAL, PLUS, MINUS, DIV, MUL, MOD;
-terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET;
+terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, FOR, CONTINUE, BREAK;
 terminal PROG, CONST, SEMI, COMMA, DOT, VOID, ENUM;
 terminal String IDENT;
 terminal Integer NUMBER;
@@ -132,6 +132,7 @@ VarDecl ::= (SingleVarDecl) IDENT:varName {: RESULT=new SingleVarDecl(varName); 
 			(VarDeclArray) IDENT:varName LBRACKET RBRACKET {: RESULT=new VarDeclArray(varName); RESULT.setLine(varNameleft); :} 
 			|
 			(ErrorDecl) error:l  {: parser.report_error("Izvrsen oporavak u liniji " + lleft, null);  :} {: RESULT=new ErrorDecl(); :}
+
 			;
 
 EnumDeclList ::= (EnumDeclarations) EnumDeclList:E1 COMMA EnumDecl:E2 {: RESULT=new EnumDeclarations(E1, E2); RESULT.setLine(E1left); :}
@@ -187,7 +188,12 @@ StatementList ::= (StmtDeclarations) StatementList:S1 Statement:S2 {: RESULT=new
 				|
 				(NoStmtDeclarations) {: RESULT=new NoStmtDeclarations(); :} /* epsilon */
 				;	
-						
+/*
+InnerStatementList ::= (InnerStmtList) InnerStatementList Statement
+					|
+					(SingleInnerStmt) Statement
+					;
+	*/			
 Statement ::= (DesignatorStmt) DesignatorStatement:D1 {: RESULT=new DesignatorStmt(D1); RESULT.setLine(D1left); :}
 			| 
 			(ReadStmt) READ LPAREN Designator:D1 RPAREN SEMI {: RESULT=new ReadStmt(D1); RESULT.setLine(D1left); :}
@@ -199,8 +205,19 @@ Statement ::= (DesignatorStmt) DesignatorStatement:D1 {: RESULT=new DesignatorSt
 			(ReturnStmt) RETURN Expr:e SEMI {: RESULT=new ReturnStmt(e); RESULT.setLine(eleft); :}
 			|
 			(ReturnNoExpr) RETURN SEMI {: RESULT=new ReturnNoExpr(); :}
+			;/*
+			|
+			(ForStmt) ForStatement 
+			|
+			(InnerStatement) LBRACE InnerStatementList RBRACE
+			|
+			(BreakStmt) BREAK SEMI
+			|
+			(ContinueStmt) CONTINUE SEMI
 			;
 			
+ForStatement ::= FOR LPAREN ForDesignatorStatement SEMI ForCondiditon SEMI ForDesignatorStatement RPAREN Statement
+			*/
 AssignmentExpression ::= (AssignmentExpr) Expr:e SEMI {: RESULT=new AssignmentExpr(e); RESULT.setLine(eleft); :};
 						
 		   		

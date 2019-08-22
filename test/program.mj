@@ -2,6 +2,9 @@ program ispravno
 	int niz[];
 	char a;
 	enum Broj {PET = 5} 
+	
+	int a1 ,*,c, d, *b b;
+	
 {
 	int inc(int a) {
 		return 1 + a;

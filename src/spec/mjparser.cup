@@ -51,7 +51,7 @@ scan with {:
 
 
 terminal READ, PRINT, NEW, RETURN, INC, DEC, EQUAL, PLUS, MINUS, DIV, MUL, MOD;
-terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET;
+terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, FOR, CONTINUE, BREAK;
 terminal PROG, CONST, SEMI, COMMA, DOT, VOID, ENUM;
 terminal String IDENT;
 terminal Integer NUMBER;
@@ -111,6 +111,7 @@ VarDecl ::= (SingleVarDecl) IDENT:varName
 			(VarDeclArray) IDENT:varName LBRACKET RBRACKET 
 			|
 			(ErrorDecl) error:l  {: parser.report_error("Izvrsen oporavak u liniji " + lleft, null);  :}
+
 			;
 
 EnumDeclList ::= (EnumDeclarations) EnumDeclList COMMA EnumDecl
@@ -166,7 +167,12 @@ StatementList ::= (StmtDeclarations) StatementList Statement
 				|
 				(NoStmtDeclarations) /* epsilon */
 				;	
-						
+/*
+InnerStatementList ::= (InnerStmtList) InnerStatementList Statement
+					|
+					(SingleInnerStmt) Statement
+					;
+	*/			
 Statement ::= (DesignatorStmt) DesignatorStatement
 			| 
 			(ReadStmt) READ LPAREN Designator RPAREN SEMI
@@ -178,8 +184,19 @@ Statement ::= (DesignatorStmt) DesignatorStatement
 			(ReturnStmt) RETURN Expr:e SEMI
 			|
 			(ReturnNoExpr) RETURN SEMI
+			;/*
+			|
+			(ForStmt) ForStatement 
+			|
+			(InnerStatement) LBRACE InnerStatementList RBRACE
+			|
+			(BreakStmt) BREAK SEMI
+			|
+			(ContinueStmt) CONTINUE SEMI
 			;
 			
+ForStatement ::= FOR LPAREN ForDesignatorStatement SEMI ForCondiditon SEMI ForDesignatorStatement RPAREN Statement
+			*/
 AssignmentExpression ::= (AssignmentExpr) Expr:e SEMI;
 						
 		   		
