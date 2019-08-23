@@ -53,7 +53,7 @@ scan with {:
 terminal READ, PRINT, NEW, RETURN, INC, DEC, EQUAL, PLUS, MINUS, DIV, MUL, MOD;
 terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, FOR, CONTINUE, BREAK;
 terminal PROG, CONST, SEMI, COMMA, DOT, VOID, ENUM;
-terminal OR, AND, EQ, NEQ, GT, GTE, LT, LTE;
+terminal OR, AND, EQ, NEQ, GT, GTE, LT, LTE, IF, ELSE;
 
 terminal String IDENT;
 terminal Integer NUMBER;
@@ -65,11 +65,11 @@ nonterminal DeclarationList, Declaration, ListVarDeclTypeList, VarDeclTypeList, 
 nonterminal ConstDeclList, EnumDeclList, VarDecl, EnumDecl, ConstDecl, StatementList, FormalParamList, FormPars, FormalParamDecl;
  
 nonterminal InnerStatementList, ForStatement, ForDesignatorStatement, ForCondition, Relop, AfterForDesignatorStatement, BreakStatement, ContinueStatement;
- 
+nonterminal Matched, Unmatched, IfStatement, ElseStatement, IfCondition;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor, AssignmentExpression, Condition, CondTerm, CondFact;
 
-
+precedence left ELSE;
 Program ::= (Program) PROG ProgName:p DeclarationLists LBRACE MethodDeclList RBRACE;
 
 ProgName ::= (ProgName) IDENT:progName;
@@ -101,8 +101,7 @@ VarType ::= (VarType)Type:typeName;
 
 VarDeclTypeList ::= (VarDeclarationTypeList) VarType:varType VarDeclList SEMI
 				|
-				(ErrorNumDecl) error SEMI:l {: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);  :}
-				
+				(ErrorNumDecl) error SEMI:l {: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);  :}	
 			;
 
 VarDeclList ::= (VarDeclarations) VarDeclList COMMA VarDecl				
@@ -176,8 +175,23 @@ InnerStatementList ::= (InnerStmtList) InnerStatementList Statement
 					|
 					(NoInnerStmt) /*epsilon*/
 					;
-			
-Statement ::= (DesignatorStmt) DesignatorStatement SEMI
+Statement ::= (MatchedStmt) Matched
+		   |
+		   (UnmatchedStmt) Unmatched
+		   ; 
+
+Unmatched ::= (UnmatchedIf) IfStatement LPAREN IfCondition RPAREN Statement
+		 	|
+		 	(UnmatchedIfElse) IfStatement LPAREN IfCondition RPAREN Matched ElseStatement Unmatched
+		 	|
+		 	(MatchedIfElse) IfStatement LPAREN IfCondition RPAREN Matched ElseStatement Matched
+		 	;
+		 	
+IfStatement ::= (If) IF;
+ElseStatement::= (Else) ELSE;
+IfCondition ::= (IfCondition) Condition;
+
+Matched ::= (DesignatorStmt) DesignatorStatement SEMI
 			| 
 			(AssignmentExprError) error SEMI:l
 			{: parser.report_error("Izvrsen oporavak u liniji " + lleft , null );  :}	
@@ -200,6 +214,7 @@ Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			|
 			(ContinueStmt) ContinueStatement SEMI
 			;
+			
 ReturnStatement ::= (ReturnStatement) RETURN;
 BreakStatement ::= (BreakStatement) BREAK;
 ContinueStatement ::= (ContinueStatement) CONTINUE;
@@ -216,7 +231,7 @@ AfterForDesignatorStatement ::= (AfterForDesignatorStmt) DesignatorStatement:s
 						(NoAfterForDesignatorStmt)/* epsilon */
 						;
 							
-						
+				
 ForCondition ::= (ForCntd) Condition
 				|
 				(NoForCndt) /* epslion */

@@ -53,7 +53,7 @@ scan with {:
 terminal READ, PRINT, NEW, RETURN, INC, DEC, EQUAL, PLUS, MINUS, DIV, MUL, MOD;
 terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, FOR, CONTINUE, BREAK;
 terminal PROG, CONST, SEMI, COMMA, DOT, VOID, ENUM;
-terminal OR, AND, EQ, NEQ, GT, GTE, LT, LTE;
+terminal OR, AND, EQ, NEQ, GT, GTE, LT, LTE, IF, ELSE;
 
 terminal String IDENT;
 terminal Integer NUMBER;
@@ -94,11 +94,15 @@ nonterminal Relop Relop;
 nonterminal AfterForDesignatorStatement AfterForDesignatorStatement;
 nonterminal BreakStatement BreakStatement;
 nonterminal ContinueStatement ContinueStatement;
- 
+nonterminal Matched Matched;
+nonterminal Unmatched Unmatched;
+nonterminal IfStatement IfStatement;
+nonterminal ElseStatement ElseStatement;
+nonterminal IfCondition IfCondition;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
 nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor, AssignmentExpression, Condition, CondTerm, CondFact;
 
-
+precedence left ELSE;
 Program ::= (Program) PROG ProgName:p DeclarationLists:D1 LBRACE MethodDeclList:M2 RBRACE {: RESULT=new Program(p, D1, M2); RESULT.setLine(pleft); :};
 
 ProgName ::= (ProgName) IDENT:progName {: RESULT=new ProgName(progName); RESULT.setLine(progNameleft); :};
@@ -130,8 +134,7 @@ VarType ::= (VarType)Type:typeName {: RESULT=new VarType(typeName); RESULT.setLi
 
 VarDeclTypeList ::= (VarDeclarationTypeList) VarType:varType VarDeclList:V1 SEMI {: RESULT=new VarDeclarationTypeList(varType, V1); RESULT.setLine(varTypeleft); :}
 				|
-				(ErrorNumDecl) error SEMI:l {: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);  :} {: RESULT=new ErrorNumDecl(); :}
-				
+				(ErrorNumDecl) error SEMI:l {: parser.report_error("Izvrsen oporavak do ; u liniji " + lleft, null);  :} {: RESULT=new ErrorNumDecl(); :}	
 			;
 
 VarDeclList ::= (VarDeclarations) VarDeclList:V1 COMMA VarDecl:V2 {: RESULT=new VarDeclarations(V1, V2); RESULT.setLine(V1left); :}				
@@ -205,8 +208,23 @@ InnerStatementList ::= (InnerStmtList) InnerStatementList:I1 Statement:S2 {: RES
 					|
 					(NoInnerStmt) {: RESULT=new NoInnerStmt(); :} /*epsilon*/
 					;
-			
-Statement ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new DesignatorStmt(D1); RESULT.setLine(D1left); :}
+Statement ::= (MatchedStmt) Matched:M1 {: RESULT=new MatchedStmt(M1); RESULT.setLine(M1left); :}
+		   |
+		   (UnmatchedStmt) Unmatched:U1 {: RESULT=new UnmatchedStmt(U1); RESULT.setLine(U1left); :}
+		   ; 
+
+Unmatched ::= (UnmatchedIf) IfStatement:I1 LPAREN IfCondition:I2 RPAREN Statement:S3 {: RESULT=new UnmatchedIf(I1, I2, S3); RESULT.setLine(I1left); :}
+		 	|
+		 	(UnmatchedIfElse) IfStatement:I1 LPAREN IfCondition:I2 RPAREN Matched:M3 ElseStatement:E4 Unmatched:U5 {: RESULT=new UnmatchedIfElse(I1, I2, M3, E4, U5); RESULT.setLine(I1left); :}
+		 	|
+		 	(MatchedIfElse) IfStatement:I1 LPAREN IfCondition:I2 RPAREN Matched:M3 ElseStatement:E4 Matched:M5 {: RESULT=new MatchedIfElse(I1, I2, M3, E4, M5); RESULT.setLine(I1left); :}
+		 	;
+		 	
+IfStatement ::= (If) IF {: RESULT=new If(); :};
+ElseStatement::= (Else) ELSE {: RESULT=new Else(); :};
+IfCondition ::= (IfCondition) Condition:C1 {: RESULT=new IfCondition(C1); RESULT.setLine(C1left); :};
+
+Matched ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new DesignatorStmt(D1); RESULT.setLine(D1left); :}
 			| 
 			(AssignmentExprError) error SEMI:l
 			{: parser.report_error("Izvrsen oporavak u liniji " + lleft , null );  :} {: RESULT=new AssignmentExprError(); :}	
@@ -229,6 +247,7 @@ Statement ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new Designa
 			|
 			(ContinueStmt) ContinueStatement:C1 SEMI {: RESULT=new ContinueStmt(C1); RESULT.setLine(C1left); :}
 			;
+			
 ReturnStatement ::= (ReturnStatement) RETURN {: RESULT=new ReturnStatement(); :};
 BreakStatement ::= (BreakStatement) BREAK {: RESULT=new BreakStatement(); :};
 ContinueStatement ::= (ContinueStatement) CONTINUE {: RESULT=new ContinueStatement(); :};
@@ -245,7 +264,7 @@ AfterForDesignatorStatement ::= (AfterForDesignatorStmt) DesignatorStatement:s {
 						(NoAfterForDesignatorStmt) {: RESULT=new NoAfterForDesignatorStmt(); :}/* epsilon */
 						;
 							
-						
+				
 ForCondition ::= (ForCntd) Condition:C1 {: RESULT=new ForCntd(C1); RESULT.setLine(C1left); :}
 				|
 				(NoForCndt) {: RESULT=new NoForCndt(); :} /* epslion */

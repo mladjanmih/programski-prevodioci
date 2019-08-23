@@ -76,6 +76,8 @@ import java_cup.runtime.Symbol;
 ">="		{ return new_symbol(sym.GTE, yytext()); }
 "<"			{ return new_symbol(sym.LT, yytext()); }
 "<="		{ return new_symbol(sym.LTE, yytext()); }
+"if"		{ return new_symbol(sym.IF, yytext()); }
+"else"		{ return new_symbol(sym.ELSE, yytext()); }
 
 "//" {yybegin(COMMENT);}
 <COMMENT> . {yybegin(COMMENT);}

@@ -442,7 +442,75 @@ public class CodeGenerator extends VisitorAdaptor {
 		currentForContext.conditionBackPatchAdresses = new LinkedList<Integer>();
 	}
 	
+	//====IF======
+	public void visit(If _if) {
+		forContexts.push(currentForContext);
+		currentForContext = new ForContext();
+ 	}
 	
+	public void visit(Else _else) {
+		Code.putJump(0);
+		currentForContext.ifElseStatementExitBackPatchAddresses.add(Code.pc - 2);
+		for(Integer i: currentForContext.falseConditionAdresses) {
+			Code.fixup(i);
+		}
+		
+		currentForContext.falseConditionAdresses = new LinkedList<Integer>();
+	}
+	
+	public void visit(UnmatchedIf unmatchedIf) {
+		for(Integer i: currentForContext.falseConditionAdresses) {
+			Code.fixup(i);
+		}
+		
+		currentForContext.falseConditionAdresses = new LinkedList<Integer>();	
+		
+		if (currentForContext.ifElseStatementExitBackPatchAddresses.size() > 0)
+			for(Integer i: currentForContext.ifElseStatementExitBackPatchAddresses) {
+				Code.fixup(i);
+			}
+		
+		currentForContext.ifElseStatementExitBackPatchAddresses = new LinkedList<Integer>();
+		currentForContext = forContexts.pop();
+	}
+	
+	public void visit(UnmatchedIfElse unmatchedIfElse) {
+
+		if (currentForContext.ifElseStatementExitBackPatchAddresses.size() > 0)
+			for(Integer i: currentForContext.ifElseStatementExitBackPatchAddresses) {
+				Code.fixup(i);
+			}
+		
+		currentForContext.ifElseStatementExitBackPatchAddresses = new LinkedList<Integer>();
+		currentForContext = forContexts.pop();
+	}
+	
+	public void visit(MatchedIfElse matchedIfElse) {
+		if (currentForContext.ifElseStatementExitBackPatchAddresses.size() > 0)
+			for(Integer i: currentForContext.ifElseStatementExitBackPatchAddresses) {
+				Code.fixup(i);
+			}
+		
+		currentForContext.ifElseStatementExitBackPatchAddresses = new LinkedList<Integer>();
+		currentForContext = forContexts.pop();
+	}
+	
+//	public void visit(UnmatchedStmt unmatchedStmt) {
+//
+//	}
+	
+	public void visit(IfCondition ifCondition) {
+
+		
+		Code.putJump(0);
+		currentForContext.falseConditionAdresses.add(Code.pc - 2);
+		for(Integer i: currentForContext.trueConditionBackPatchAdresses) {
+			Code.fixup(i);
+		}
+		currentForContext.trueConditionBackPatchAdresses = new LinkedList<Integer>();
+	}
+	
+	//====FOR=====
 	public void visit(ForCntd forCntd) {
 		Code.putJump(0);
 		currentForContext.falseConditionAdresses.add(Code.pc - 2);

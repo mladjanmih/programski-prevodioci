@@ -6,6 +6,7 @@ public class ForContext {
 	public LinkedList<Integer> conditionBackPatchAdresses = new LinkedList<Integer>();
 	public LinkedList<Integer> trueConditionBackPatchAdresses = new LinkedList<Integer>();
 	public LinkedList<Integer> falseConditionAdresses = new LinkedList<Integer>();
+	public LinkedList<Integer> ifElseStatementExitBackPatchAddresses = new LinkedList<Integer>();
 	//public LinkedList<Integer> afterForDesigStatementAddresses = new LinkedList<Integer>();
 	//public int falseConditionAdress = 0;
 	public int conditionStatementAddress = 0;

@@ -6,16 +6,41 @@ program ispravno
 	
 	void main()	
 		int i, j;
+		bool cond;
 	{
-		j =0;
-		for(a1 = 0; a1 < 10 || j % 13 != 0 && j <= 11 || j > 11 && j < 14; a1++) {
-			print(1);
-			for (i = 0; i < 3; i++) {
-				print(2);
+		a1 = 11;
+		//j =0;
+		//cond = true;
+		//a1 < 10 || j % 13 != 0 && j <= 11 || j > 11 && j < 14
+		//for(a1 = 0; cond ; a1++) {
+		//	print(1);
+		//	for (i = 0; i < 3; i++) {
+		//		print(2);
 
+		//	}
+			//j++;
+		//	cond = false;
+		//}
+		for(a1 = 1; a1 < 12; a1++) {
+			if (a1 == 1) {
+				for(j = 3; j>=0; j--)
+					print(1);
 			}
-			j++;
+			else if (a1 == 2) {
+				print(2);
+			}
+			else if (a1 == 3){
+				print(3);
+			}
+			else {
+				if (a1 == 8) print(8);
+				else if (a1 > 8) {
+					if (a1 == 10) print(10);
+					else print(99);
+				}
+			}
 		}
-
+			
+		print(eol); print('k'); print('r'); print('a'); print('j');
 	}
 }
