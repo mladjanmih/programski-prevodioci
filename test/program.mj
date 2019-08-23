@@ -1,32 +1,21 @@
 program ispravno
-	int niz[];
-	char a;
-	enum Broj {PET = 5} 
-	
-	int a1 ,*,c, d, *b b;
-	
+	int a1;
 {
-	int inc(int a) {
-		return 1 + a;
-	}
+
 	
-	Broj brojPet() {
-		return Broj.PET;
-	}
 	
 	void main()	
-		int f;
-		Broj broj;
+		int i, j;
 	{
-		broj = brojPet();
-		print(chr(97));
+		j =0;
+		for(a1 = 0; a1 < 10 || j % 13 != 0 && j <= 11 || j > 11 && j < 14; a1++) {
+			print(1);
+			for (i = 0; i < 3; i++) {
+				print(2);
 
-		print(broj);
-		//f = true * false;
-		niz = new int[21635465];
-		print(len(niz));
-		//
-		//niz[1] = -5 * 2 + (-inc(-5) + 20);
-		//print(niz[1]);
+			}
+			j++;
+		}
+
 	}
 }

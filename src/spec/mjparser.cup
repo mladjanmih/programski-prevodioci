@@ -53,17 +53,21 @@ scan with {:
 terminal READ, PRINT, NEW, RETURN, INC, DEC, EQUAL, PLUS, MINUS, DIV, MUL, MOD;
 terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, FOR, CONTINUE, BREAK;
 terminal PROG, CONST, SEMI, COMMA, DOT, VOID, ENUM;
+terminal OR, AND, EQ, NEQ, GT, GTE, LT, LTE;
+
 terminal String IDENT;
 terminal Integer NUMBER;
 terminal String CHAR;
 terminal String BOOL;
 
 nonterminal Statement, Addop, Mulop, VarType, ConstType, ActualPars, ActualParamList, DeclarationLists, MinusSign;
-nonterminal DeclarationList, Declaration, ListVarDeclTypeList, VarDeclTypeList, VarDeclList, MethodDeclList;
+nonterminal DeclarationList, Declaration, ListVarDeclTypeList, VarDeclTypeList, VarDeclList, MethodDeclList, ReturnStatement;
 nonterminal ConstDeclList, EnumDeclList, VarDecl, EnumDecl, ConstDecl, StatementList, FormalParamList, FormPars, FormalParamDecl;
  
+nonterminal InnerStatementList, ForStatement, ForDesignatorStatement, ForCondition, Relop, AfterForDesignatorStatement, BreakStatement, ContinueStatement;
+ 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor, AssignmentExpression;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor, AssignmentExpression, Condition, CondTerm, CondFact;
 
 
 Program ::= (Program) PROG ProgName:p DeclarationLists LBRACE MethodDeclList RBRACE;
@@ -167,49 +171,84 @@ StatementList ::= (StmtDeclarations) StatementList Statement
 				|
 				(NoStmtDeclarations) /* epsilon */
 				;	
-/*
+
 InnerStatementList ::= (InnerStmtList) InnerStatementList Statement
 					|
-					(SingleInnerStmt) Statement
+					(NoInnerStmt) /*epsilon*/
 					;
-	*/			
-Statement ::= (DesignatorStmt) DesignatorStatement
+			
+Statement ::= (DesignatorStmt) DesignatorStatement SEMI
 			| 
+			(AssignmentExprError) error SEMI:l
+			{: parser.report_error("Izvrsen oporavak u liniji " + lleft , null );  :}	
+			|
 			(ReadStmt) READ LPAREN Designator RPAREN SEMI
 			| 
 			(PrintStmt) PRINT LPAREN Expr RPAREN SEMI
 			|
 			(PrintNumStmt) PRINT LPAREN Expr COMMA NUMBER RPAREN SEMI
 			|
-			(ReturnStmt) RETURN Expr:e SEMI
+			(ReturnStmt) ReturnStatement Expr:e SEMI
 			|
-			(ReturnNoExpr) RETURN SEMI
-			;/*
+			(ReturnNoExpr) ReturnStatement SEMI
 			|
-			(ForStmt) ForStatement 
+			(ForStmt) ForStatement LPAREN ForDesignatorStatement SEMI ForCondition SEMI AfterForDesignatorStatement RPAREN Statement
 			|
 			(InnerStatement) LBRACE InnerStatementList RBRACE
 			|
-			(BreakStmt) BREAK SEMI
+			(BreakStmt) BreakStatement SEMI
 			|
-			(ContinueStmt) CONTINUE SEMI
+			(ContinueStmt) ContinueStatement SEMI
+			;
+ReturnStatement ::= (ReturnStatement) RETURN;
+BreakStatement ::= (BreakStatement) BREAK;
+ContinueStatement ::= (ContinueStatement) CONTINUE;
+		
+ForStatement ::= (For) FOR:forst;
+			
+ForDesignatorStatement ::= (ForDesignatorStmt) DesignatorStatement:s
+						|
+						(NoForDesignatorStmt)/* epsilon */
+						;
+
+AfterForDesignatorStatement ::= (AfterForDesignatorStmt) DesignatorStatement:s
+						|
+						(NoAfterForDesignatorStmt)/* epsilon */
+						;
+							
+						
+ForCondition ::= (ForCntd) Condition
+				|
+				(NoForCndt) /* epslion */
+				;
+
+Condition ::= (OrCondition) Condition OR CondTerm	
+				|
+				(SingleCondTerm) CondTerm
+				;				
+				
+CondTerm ::= (AndCondition) CondTerm AND CondFact
+			|
+			(SingleCondFact) CondFact
 			;
 			
-ForStatement ::= FOR LPAREN ForDesignatorStatement SEMI ForCondiditon SEMI ForDesignatorStatement RPAREN Statement
-			*/
-AssignmentExpression ::= (AssignmentExpr) Expr:e SEMI;
+CondFact ::= (RelopExpr) CondFact Relop Expr
+			 |
+			 (SingleExpr) Expr
+			 ;
+			 
+
+AssignmentExpression ::= (AssignmentExpr) Expr:e;
 						
 		   		
 DesignatorStatement ::=(Assignment) Designator:dest EQUAL AssignmentExpression:e 
 					|
-					(AssignmentExprError) error SEMI:l 
-					{: parser.report_error("Izvrsen oporavak u liniji " + lleft, null);  :}	
+
+					(Increment) Designator:dest INC
 					|
-					(Increment) Designator:dest INC SEMI
+					(Decrement) Designator:dest DEC
 					|
-					(Decrement) Designator:dest DEC SEMI
-					|
-					(ProcCall) FuncName:name LPAREN ActualPars RPAREN SEMI
+					(ProcCall) FuncName:name LPAREN ActualPars RPAREN
 					;
 
 MinusSign ::= (MinusSign) MINUS;
@@ -269,7 +308,20 @@ Mulop ::= (MulMulop) MUL
 		| 
 		(ModMulop) MOD
 		;
-
+		
+Relop ::= (EqRelop) EQ
+		|
+		(NeqRelop) NEQ
+		|
+		(GtRelop) GT
+		|
+		(GteRelop) GTE
+		|
+		(LtRelop) LT
+		|
+		(LteRelop) LTE
+		;
+		
 DesignatorName ::= (DesignatorName) IDENT:name;
 Designator ::= (IdentDesign) IDENT:name
 			|

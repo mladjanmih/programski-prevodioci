@@ -53,6 +53,8 @@ scan with {:
 terminal READ, PRINT, NEW, RETURN, INC, DEC, EQUAL, PLUS, MINUS, DIV, MUL, MOD;
 terminal LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET, FOR, CONTINUE, BREAK;
 terminal PROG, CONST, SEMI, COMMA, DOT, VOID, ENUM;
+terminal OR, AND, EQ, NEQ, GT, GTE, LT, LTE;
+
 terminal String IDENT;
 terminal Integer NUMBER;
 terminal String CHAR;
@@ -73,6 +75,7 @@ nonterminal ListVarDeclTypeList ListVarDeclTypeList;
 nonterminal VarDeclTypeList VarDeclTypeList;
 nonterminal VarDeclList VarDeclList;
 nonterminal MethodDeclList MethodDeclList;
+nonterminal ReturnStatement ReturnStatement;
 nonterminal ConstDeclList ConstDeclList;
 nonterminal EnumDeclList EnumDeclList;
 nonterminal VarDecl VarDecl;
@@ -83,8 +86,17 @@ nonterminal FormalParamList FormalParamList;
 nonterminal FormPars FormPars;
 nonterminal FormalParamDecl FormalParamDecl;
  
+nonterminal InnerStatementList InnerStatementList;
+nonterminal ForStatement ForStatement;
+nonterminal ForDesignatorStatement ForDesignatorStatement;
+nonterminal ForCondition ForCondition;
+nonterminal Relop Relop;
+nonterminal AfterForDesignatorStatement AfterForDesignatorStatement;
+nonterminal BreakStatement BreakStatement;
+nonterminal ContinueStatement ContinueStatement;
+ 
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor, AssignmentExpression;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor, AssignmentExpression, Condition, CondTerm, CondFact;
 
 
 Program ::= (Program) PROG ProgName:p DeclarationLists:D1 LBRACE MethodDeclList:M2 RBRACE {: RESULT=new Program(p, D1, M2); RESULT.setLine(pleft); :};
@@ -188,49 +200,84 @@ StatementList ::= (StmtDeclarations) StatementList:S1 Statement:S2 {: RESULT=new
 				|
 				(NoStmtDeclarations) {: RESULT=new NoStmtDeclarations(); :} /* epsilon */
 				;	
-/*
-InnerStatementList ::= (InnerStmtList) InnerStatementList Statement
+
+InnerStatementList ::= (InnerStmtList) InnerStatementList:I1 Statement:S2 {: RESULT=new InnerStmtList(I1, S2); RESULT.setLine(I1left); :}
 					|
-					(SingleInnerStmt) Statement
+					(NoInnerStmt) {: RESULT=new NoInnerStmt(); :} /*epsilon*/
 					;
-	*/			
-Statement ::= (DesignatorStmt) DesignatorStatement:D1 {: RESULT=new DesignatorStmt(D1); RESULT.setLine(D1left); :}
+			
+Statement ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new DesignatorStmt(D1); RESULT.setLine(D1left); :}
 			| 
+			(AssignmentExprError) error SEMI:l
+			{: parser.report_error("Izvrsen oporavak u liniji " + lleft , null );  :} {: RESULT=new AssignmentExprError(); :}	
+			|
 			(ReadStmt) READ LPAREN Designator:D1 RPAREN SEMI {: RESULT=new ReadStmt(D1); RESULT.setLine(D1left); :}
 			| 
 			(PrintStmt) PRINT LPAREN Expr:E1 RPAREN SEMI {: RESULT=new PrintStmt(E1); RESULT.setLine(E1left); :}
 			|
 			(PrintNumStmt) PRINT LPAREN Expr:E1 COMMA NUMBER:N2 RPAREN SEMI {: RESULT=new PrintNumStmt(E1, N2); RESULT.setLine(E1left); :}
 			|
-			(ReturnStmt) RETURN Expr:e SEMI {: RESULT=new ReturnStmt(e); RESULT.setLine(eleft); :}
+			(ReturnStmt) ReturnStatement:R1 Expr:e SEMI {: RESULT=new ReturnStmt(R1, e); RESULT.setLine(R1left); :}
 			|
-			(ReturnNoExpr) RETURN SEMI {: RESULT=new ReturnNoExpr(); :}
-			;/*
+			(ReturnNoExpr) ReturnStatement:R1 SEMI {: RESULT=new ReturnNoExpr(R1); RESULT.setLine(R1left); :}
 			|
-			(ForStmt) ForStatement 
+			(ForStmt) ForStatement:F1 LPAREN ForDesignatorStatement:F2 SEMI ForCondition:F3 SEMI AfterForDesignatorStatement:A4 RPAREN Statement:S5 {: RESULT=new ForStmt(F1, F2, F3, A4, S5); RESULT.setLine(F1left); :}
 			|
-			(InnerStatement) LBRACE InnerStatementList RBRACE
+			(InnerStatement) LBRACE InnerStatementList:I1 RBRACE {: RESULT=new InnerStatement(I1); RESULT.setLine(I1left); :}
 			|
-			(BreakStmt) BREAK SEMI
+			(BreakStmt) BreakStatement:B1 SEMI {: RESULT=new BreakStmt(B1); RESULT.setLine(B1left); :}
 			|
-			(ContinueStmt) CONTINUE SEMI
+			(ContinueStmt) ContinueStatement:C1 SEMI {: RESULT=new ContinueStmt(C1); RESULT.setLine(C1left); :}
+			;
+ReturnStatement ::= (ReturnStatement) RETURN {: RESULT=new ReturnStatement(); :};
+BreakStatement ::= (BreakStatement) BREAK {: RESULT=new BreakStatement(); :};
+ContinueStatement ::= (ContinueStatement) CONTINUE {: RESULT=new ContinueStatement(); :};
+		
+ForStatement ::= (For) FOR:forst {: RESULT=new For(); :};
+			
+ForDesignatorStatement ::= (ForDesignatorStmt) DesignatorStatement:s {: RESULT=new ForDesignatorStmt(s); RESULT.setLine(sleft); :}
+						|
+						(NoForDesignatorStmt) {: RESULT=new NoForDesignatorStmt(); :}/* epsilon */
+						;
+
+AfterForDesignatorStatement ::= (AfterForDesignatorStmt) DesignatorStatement:s {: RESULT=new AfterForDesignatorStmt(s); RESULT.setLine(sleft); :}
+						|
+						(NoAfterForDesignatorStmt) {: RESULT=new NoAfterForDesignatorStmt(); :}/* epsilon */
+						;
+							
+						
+ForCondition ::= (ForCntd) Condition:C1 {: RESULT=new ForCntd(C1); RESULT.setLine(C1left); :}
+				|
+				(NoForCndt) {: RESULT=new NoForCndt(); :} /* epslion */
+				;
+
+Condition ::= (OrCondition) Condition:C1 OR CondTerm:C2 {: RESULT=new OrCondition(C1, C2); RESULT.setLine(C1left); :}	
+				|
+				(SingleCondTerm) CondTerm:C1 {: RESULT=new SingleCondTerm(C1); RESULT.setLine(C1left); :}
+				;				
+				
+CondTerm ::= (AndCondition) CondTerm:C1 AND CondFact:C2 {: RESULT=new AndCondition(C1, C2); RESULT.setLine(C1left); :}
+			|
+			(SingleCondFact) CondFact:C1 {: RESULT=new SingleCondFact(C1); RESULT.setLine(C1left); :}
 			;
 			
-ForStatement ::= FOR LPAREN ForDesignatorStatement SEMI ForCondiditon SEMI ForDesignatorStatement RPAREN Statement
-			*/
-AssignmentExpression ::= (AssignmentExpr) Expr:e SEMI {: RESULT=new AssignmentExpr(e); RESULT.setLine(eleft); :};
+CondFact ::= (RelopExpr) CondFact:C1 Relop:R2 Expr:E3 {: RESULT=new RelopExpr(C1, R2, E3); RESULT.setLine(C1left); :}
+			 |
+			 (SingleExpr) Expr:E1 {: RESULT=new SingleExpr(E1); RESULT.setLine(E1left); :}
+			 ;
+			 
+
+AssignmentExpression ::= (AssignmentExpr) Expr:e {: RESULT=new AssignmentExpr(e); RESULT.setLine(eleft); :};
 						
 		   		
 DesignatorStatement ::=(Assignment) Designator:dest EQUAL AssignmentExpression:e {: RESULT=new Assignment(dest, e); RESULT.setLine(destleft); :} 
 					|
-					(AssignmentExprError) error SEMI:l 
-					{: parser.report_error("Izvrsen oporavak u liniji " + lleft, null);  :} {: RESULT=new AssignmentExprError(); :}	
+
+					(Increment) Designator:dest INC {: RESULT=new Increment(dest); RESULT.setLine(destleft); :}
 					|
-					(Increment) Designator:dest INC SEMI {: RESULT=new Increment(dest); RESULT.setLine(destleft); :}
+					(Decrement) Designator:dest DEC {: RESULT=new Decrement(dest); RESULT.setLine(destleft); :}
 					|
-					(Decrement) Designator:dest DEC SEMI {: RESULT=new Decrement(dest); RESULT.setLine(destleft); :}
-					|
-					(ProcCall) FuncName:name LPAREN ActualPars:A1 RPAREN SEMI {: RESULT=new ProcCall(name, A1); RESULT.setLine(nameleft); :}
+					(ProcCall) FuncName:name LPAREN ActualPars:A1 RPAREN {: RESULT=new ProcCall(name, A1); RESULT.setLine(nameleft); :}
 					;
 
 MinusSign ::= (MinusSign) MINUS {: RESULT=new MinusSign(); :};
@@ -290,7 +337,20 @@ Mulop ::= (MulMulop) MUL {: RESULT=new MulMulop(); :}
 		| 
 		(ModMulop) MOD {: RESULT=new ModMulop(); :}
 		;
-
+		
+Relop ::= (EqRelop) EQ {: RESULT=new EqRelop(); :}
+		|
+		(NeqRelop) NEQ {: RESULT=new NeqRelop(); :}
+		|
+		(GtRelop) GT {: RESULT=new GtRelop(); :}
+		|
+		(GteRelop) GTE {: RESULT=new GteRelop(); :}
+		|
+		(LtRelop) LT {: RESULT=new LtRelop(); :}
+		|
+		(LteRelop) LTE {: RESULT=new LteRelop(); :}
+		;
+		
 DesignatorName ::= (DesignatorName) IDENT:name {: RESULT=new DesignatorName(name); RESULT.setLine(nameleft); :};
 Designator ::= (IdentDesign) IDENT:name {: RESULT=new IdentDesign(name); RESULT.setLine(nameleft); :}
 			|

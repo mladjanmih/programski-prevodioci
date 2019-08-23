@@ -1,5 +1,6 @@
 package rs.ac.bg.etf.pp1;
 
+import rs.etf.pp1.mj.runtime.Code;
 import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.*;
 
@@ -7,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
@@ -741,6 +743,82 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			report_error("Greska na liniji " + printStmt.getLine() + " : Operant instruckije PRINT mora biti INT ili CHAR tipa!", null); 
 	}
 	
+	
+	//===========================IF AND FOR========================
+	int forLevel = 0;
+
+	public void visit (SingleExpr singleExpr) {
+		singleExpr.struct = singleExpr.getExpr().struct;
+	}
+	
+	public void visit(RelopExpr relopExpr) {
+		Struct te = relopExpr.getCondFact().struct;
+		Struct t = relopExpr.getExpr().struct;
+		if ((te.equals(t) || ((te == Tab.intType) && (isEnumType(te)))) || intEnumCompatible(t, te) || enumExpCompatible(t, te)) {
+			relopExpr.struct = boolType;
+		}
+		else {
+			report_error("Greska na liniji " + relopExpr.getLine() + " : nekompatibilni tipovi u uslovnom izrazu.", null);
+			relopExpr.struct = boolType;
+		}	
+	}
+	
+	public void visit(SingleCondFact singleCondFact) {
+		if (!singleCondFact.getCondFact().struct.equals(boolType)) {
+			report_error("Greska na liniji " + singleCondFact.getLine() + " : nedozvoljen tip u uslovnom izrazu.", null);
+			
+		}
+		singleCondFact.struct = boolType;
+	}
+	
+	public void visit(AndCondition andCondition) {
+		if (andCondition.getCondTerm().struct.equals(boolType) && andCondition.getCondTerm().struct.equals(andCondition.getCondFact().struct)) {
+			andCondition.struct = boolType;
+		}
+		else {
+			report_error("Greska na liniji " + andCondition.getLine() + " : nedozvoljen tip u uslovnom izrazu.", null);
+
+		}
+	}
+	
+	public void visit(SingleCondTerm singleCondTerm) {
+		if (!singleCondTerm.getCondTerm().struct.equals(boolType)) {
+			report_error("Greska na liniji " + singleCondTerm.getLine() + " : nedozvoljen tip u uslovnom izrazu.", null);
+
+		}
+		singleCondTerm.struct = boolType;
+	}
+	
+	public void visit(OrCondition orCondition) {
+		if (orCondition.getCondition().struct.equals(boolType) && orCondition.getCondition().struct.equals(orCondition.getCondTerm().struct)) {
+			orCondition.struct = boolType;
+		}
+		else {
+			report_error("Greska na liniji " + orCondition.getLine() + " : nedozvoljen tip u uslovnom izrazu.", null);
+
+		}
+	}
+	
+	public void visit(For _for) {
+		++forLevel;
+	}
+	
+	public void visit(ForStmt forStmt) {
+		--forLevel;
+	}
+	
+	public void visit(BreakStmt breakStmt) {
+		if (forLevel == 0) {
+			report_error("Greska na liniji " + breakStmt.getLine() + " : koriscenje naredbe break izvan petlje nije dozvoljeno!", null);
+		}
+	}
+	
+	public void visit(ContinueStmt continueStmt) {
+		if (forLevel == 0) {
+			report_error("Greska na liniji " + continueStmt.getLine() + " : koriscenje naredbe continue izvan petlje nije dozvoljeno!", null);
+		}
+	}
+
 	
 	//============================UTILS=============================
 	public boolean passed() {

@@ -13,7 +13,7 @@
 				<exclude name="CounterVisitor.java"/>
 				<exclude name="AssignmentVisitor.java"/>
 				<exclude name="MyDumpSymbolTableVisitor.java" />
-
+				<exclude name="ForContext.java" />
 			</fileset>
 			<fileset dir="src/spec">
 				<exclude name="mjlexer.lex"/>

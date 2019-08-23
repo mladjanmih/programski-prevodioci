@@ -1,5 +1,8 @@
 package rs.ac.bg.etf.pp1;
 
+import java.util.LinkedList;
+import java.util.Stack;
+
 import org.apache.log4j.Logger;
 
 import rs.ac.bg.etf.pp1.AssignmentVisitor.NewArrayExprVisitor;
@@ -75,7 +78,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		// Generate method entry
 		Code.put(Code.enter);
 		Code.put(formParamCounter.getCount());
-		report_info("Pronadjeno " + varCounter.getCount() + " promenljivih i " + formParamCounter.getCount() + " formalnih parametara!", null );
+	//	report_info("Pronadjeno " + varCounter.getCount() + " promenljivih i " + formParamCounter.getCount() + " formalnih parametara!", null );
 		Code.put(formParamCounter.getCount() + varCounter.getCount());
 		returnFound = false;
 	}
@@ -359,5 +362,131 @@ public class CodeGenerator extends VisitorAdaptor {
 			con.setAdr(0);
 		}
 		Code.load(con);
+	}
+
+	
+	//================IF AND FOR====================
+	Stack<ForContext> forContexts = new Stack<ForContext>();
+	ForContext currentForContext = new ForContext();
+	
+	public void visit(ForDesignatorStmt forDesignatorStmt) {
+		currentForContext.conditionStatementAddress = Code.pc;
+	}
+	
+	public void visit(NoForDesignatorStmt noForDesignatorStmt) {
+		currentForContext.conditionStatementAddress = Code.pc;
+	}
+	
+	public void visit(SingleExpr singleExpr) {
+		
+	}
+	
+	public void visit(RelopExpr relopExpr) {
+		Class cl = relopExpr.getRelop().getClass();
+	
+		if (cl == EqRelop.class) {
+			Code.putFalseJump(Code.eq, 0);
+		}
+		else if (cl == NeqRelop.class) {
+			Code.putFalseJump(Code.ne, 0);
+		}
+		else if (cl == GtRelop.class) {
+			Code.putFalseJump(Code.gt, 0);
+		}
+		else if (cl == GteRelop.class) {
+			Code.putFalseJump(Code.ge, 0);
+		}
+		else if (cl == LtRelop.class) {
+			Code.putFalseJump(Code.lt, 0);
+		}
+		else if (cl == LteRelop.class) {
+			Code.putFalseJump(Code.le, 0);
+		}
+		
+		currentForContext.conditionBackPatchAdresses.add(Code.pc - 2);
+	}
+	
+	public void visit(AndCondition andCondition) {
+		if (andCondition.getCondFact().getClass() == SingleExpr.class) {
+			Code.loadConst(1);
+			Code.putFalseJump(Code.eq, 0);
+			currentForContext.conditionBackPatchAdresses.add(Code.pc - 2);
+		}
+	}
+	
+	public void visit(SingleCondFact singleCondFact) {
+		if (singleCondFact.getCondFact().getClass() == SingleExpr.class) {
+			Code.loadConst(1);
+			Code.putFalseJump(Code.eq, 0);
+			currentForContext.conditionBackPatchAdresses.add(Code.pc - 2);
+		}
+	}
+	
+	public void visit(SingleCondTerm singleCondTerm)  {
+		Code.putJump(0);
+		currentForContext.trueConditionBackPatchAdresses.add(Code.pc - 2);
+		for (Integer i: currentForContext.conditionBackPatchAdresses) {
+			Code.fixup(i);
+		}
+		
+		currentForContext.conditionBackPatchAdresses = new LinkedList<Integer>();
+	}
+	
+	public void visit(OrCondition orCondition) {
+		Code.putJump(0);
+		currentForContext.trueConditionBackPatchAdresses.add(Code.pc - 2);
+		for (Integer i: currentForContext.conditionBackPatchAdresses) {
+			Code.fixup(i);
+		}
+		
+		currentForContext.conditionBackPatchAdresses = new LinkedList<Integer>();
+	}
+	
+	
+	public void visit(ForCntd forCntd) {
+		Code.putJump(0);
+		currentForContext.falseConditionAdresses.add(Code.pc - 2);
+		currentForContext.afterForDesigStatementAddress = Code.pc;
+	}
+	
+	public void visit(NoForCndt noForCndt) {
+		Code.putJump(0);
+		currentForContext.falseConditionAdresses.add(Code.pc - 2);
+		currentForContext.afterForDesigStatementAddress = Code.pc;
+	}
+	
+	public void visit(AfterForDesignatorStmt afterForDesignatorStmt) {
+		Code.putJump(currentForContext.conditionStatementAddress);
+		for(Integer i: currentForContext.trueConditionBackPatchAdresses) {
+			Code.fixup(i);
+		}
+	}
+	
+	public void visit(NoAfterForDesignatorStmt noAfterForDesignatorStmt) {
+		Code.putJump(currentForContext.conditionStatementAddress);		
+		for(Integer i: currentForContext.trueConditionBackPatchAdresses) {
+			Code.fixup(i);
+		}
+	}
+	
+	public void visit(ForStmt forStmt) {
+		Code.putJump(currentForContext.afterForDesigStatementAddress);
+		for(Integer i: currentForContext.falseConditionAdresses)
+			Code.fixup(i);
+		currentForContext = forContexts.pop();
+	}
+	
+	public void visit(For _for) {
+		forContexts.push(currentForContext);
+		currentForContext = new ForContext();
+	}
+	
+	public void visit(BreakStmt breakStmt) {
+		Code.putJump(0);
+		currentForContext.falseConditionAdresses.add(Code.pc - 2);
+	}
+	
+	public void visit(ContinueStmt continueStmt) {
+		Code.putJump(currentForContext.afterForDesigStatementAddress);
 	}
 } 

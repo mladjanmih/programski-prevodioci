@@ -65,6 +65,17 @@ import java_cup.runtime.Symbol;
 "]"			{ return new_symbol(sym.RBRACKET, yytext()); }
 "false"		{ return new_symbol(sym.BOOL, yytext()); }
 "true" 		{ return new_symbol(sym.BOOL, yytext()); }
+"for"		{ return new_symbol(sym.FOR, yytext()); }
+"break"		{ return new_symbol(sym.BREAK, yytext()); }
+"continue"	{ return new_symbol(sym.CONTINUE, yytext()); }
+"||"		{ return new_symbol(sym.OR, yytext()); }
+"&&"		{ return new_symbol(sym.AND, yytext()); }
+"=="		{ return new_symbol(sym.EQ, yytext()); }
+"!="		{ return new_symbol(sym.NEQ, yytext()); }
+">"			{ return new_symbol(sym.GT, yytext()); }
+">="		{ return new_symbol(sym.GTE, yytext()); }
+"<"			{ return new_symbol(sym.LT, yytext()); }
+"<="		{ return new_symbol(sym.LTE, yytext()); }
 
 "//" {yybegin(COMMENT);}
 <COMMENT> . {yybegin(COMMENT);}
