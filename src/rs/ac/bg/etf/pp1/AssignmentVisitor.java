@@ -173,7 +173,7 @@ public class AssignmentVisitor extends VisitorAdaptor {
 			if (exprType == null || destType == null || exprType.getKind() == Struct.None) {
 				isValidInitializerListType = false;
 			}
-			if (!exprType.assignableTo(destType) && !enumAssignable(destType, exprType)) {
+			else if (!exprType.assignableTo(destType) && !enumAssignable(destType, exprType)) {
 				isValidInitializerListType = false;
 			}
 
@@ -184,9 +184,11 @@ public class AssignmentVisitor extends VisitorAdaptor {
 			Struct exprType = init.struct;
 			if (exprType == null || destType == null || exprType.getKind() == Struct.None) {
 				isValidInitializerListType = false;
+				
 			}
-			if (!exprType.assignableTo(destType) && !enumAssignable(destType, exprType)) {
+			else if (!exprType.assignableTo(destType) && !enumAssignable(destType, exprType)) {
 				isValidInitializerListType = false;
+				
 			}
 
 			initializersCount++;

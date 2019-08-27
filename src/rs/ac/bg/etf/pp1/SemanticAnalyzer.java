@@ -597,6 +597,10 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 		//}
 	}
 	
+//	public void visit(MatchedStmt stmt) {
+//		stmt.stru
+//	}
+	
 	public void visit(NewFact newFact) {
 		newFact.struct = newFact.getType().struct;	
 	}
@@ -689,10 +693,11 @@ public class SemanticAnalyzer extends VisitorAdaptor {
 			report_error("Greska na liniji " + assignment.getLine() + " : Vrednost konstanti se ne moze menjati!", null);
 		}
 		
-		Struct exprType = assignment.struct;
+		Struct exprType = assignment.getExpr().struct;
 		Struct destType = assignment.getDesignator().obj.getType();
 		
 		if (exprType == null || destType == null || exprType.getKind() == Struct.None || assignment.getDesignator().obj == Tab.noObj) {
+			report_error("Greska na liniji " + assignment.getLine() + " : " + "Nekomaptibilni tipovi u dodeli vrednosti!", null);			
 			return;
 		}
 		

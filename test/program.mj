@@ -87,18 +87,20 @@ program MJProgram
 		Broj brojevi[]; 
 		int n, i;
 		int m4; 
-		Boja boje[];
+		int boje[];
 		char string[];
 	{
-		boje = new int[4] { Boja.CRNA, Boja.BELA, increment(boje[0], 4), increment(boje[1], 5)};
-		for (i = 0; i < Broj.CETIRI; i = i + 1) 
-			print(boje[i]);
 		
-		print(eol);
 		string = new char[13] { 'P', 'r', 'o', 'j', 'e', 'k', 'a', 't', ' ' , 'P', 'P', '1', eol };
 		for(i = 0; i < 13; i++)
 			print(string[i]);
+		
+		print(eol);
+		boje = new int[4] { Boja.CRNA, Boja.BELA, increment(boje[0], 4), increment(boje[1], 5)};
+		for (i = 0; i < Broj.CETIRI; i = i + 1) 
+			print(boje[i]);
 
+		print(eol);
 		m4 = -cet;
 		n = 5;
 		brojevi = new Broj[7];
@@ -151,3 +153,12 @@ program MJProgram
 		return;
 	}
 }
+
+//     [java] Projekat PP1
+//     [java]     0    1    4    6
+//     [java] 72963
+//     [java] 36927
+//     [java]    80   42    4   -4  -53   12    0
+//     [java]   -53   -4    0    4   12   42   80
+//    [java]    80   42   12    4    0   -4  -53
+//     [java]    25    2    8   -8
