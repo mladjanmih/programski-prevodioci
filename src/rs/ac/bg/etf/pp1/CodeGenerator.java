@@ -6,6 +6,7 @@ import java.util.Stack;
 import org.apache.log4j.Logger;
 
 import rs.ac.bg.etf.pp1.AssignmentVisitor.ArrayTermVisitor;
+import rs.ac.bg.etf.pp1.AssignmentVisitor.InitializatorListCodeGenerator;
 import rs.ac.bg.etf.pp1.AssignmentVisitor.NewArrayExprVisitor;
 import rs.ac.bg.etf.pp1.CounterVisitor.FormParamCounter;
 import rs.ac.bg.etf.pp1.CounterVisitor.VarCounter;
@@ -22,6 +23,8 @@ public class CodeGenerator extends VisitorAdaptor {
 	private static final String FALSE = "false";
 	private boolean returnFound = false;
 	private int negativeExpressionDepth = 0;
+	
+	private LinkedList<Integer> initListCodeBuffer = null; 
 	public int getMainPc() {
 		return mainPc;
 	}
@@ -190,7 +193,8 @@ public class CodeGenerator extends VisitorAdaptor {
 		        	  Code.put(Code.store); Code.put(o.getAdr()); 
 		        }
 			}
-			
+			InitializatorListCodeGenerator ilcg = new InitializatorListCodeGenerator(o);
+			assignment.getExpr().traverseBottomUp(ilcg);
 		}
 		else
 		{
@@ -275,109 +279,115 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	//=================DESIGNATORS================
 	public void visit(IdentDesign designator) {
-		SyntaxNode parent = designator.getParent();
-		
-		if ((Assignment.class != parent.getClass()) && 
-				(FuncCall.class != parent.getClass()) &&
-				(ProcCall.class != parent.getClass()) && 
-				(designator.obj.getKind() != Obj.Meth)) {
+		if (!isNewArrayStatement) {
+			SyntaxNode parent = designator.getParent();
 			
-			Code.load(designator.obj);
+			if ((Assignment.class != parent.getClass()) && 
+					(FuncCall.class != parent.getClass()) &&
+					(ProcCall.class != parent.getClass()) && 
+					(designator.obj.getKind() != Obj.Meth)) {
+				
+				Code.load(designator.obj);
+			}
 		}
-		
-		
 	}
 	
 	int pcAfterGetStaticArray = 0;
 	public void visit(DesignatorName designatorName) {
-		Obj o = designatorName.obj;
-        Code.load(designatorName.obj);
+		if (!isNewArrayStatement) {
+			Obj o = designatorName.obj;
+	        Code.load(designatorName.obj);
+		}
 	}
 	
 	public void visit(ArrIdentDesign arrIdentDesign) {
-		SyntaxNode parent = arrIdentDesign.getParent();
-		if (parent.getClass() != Assignment.class
-				&& parent.getClass() != ReadStmt.class) {
-			Code.load(arrIdentDesign.obj);
+		if (!isNewArrayStatement) {
+			SyntaxNode parent = arrIdentDesign.getParent();
+			if (parent.getClass() != Assignment.class
+					&& parent.getClass() != ReadStmt.class) {
+				Code.load(arrIdentDesign.obj);
+			}
 		}
 	}
 	
 	public void visit (SubIdendDesign designator) {
-
+		if (!isNewArrayStatement) {
 			Code.load(designator.obj);
-		
+		}
 	}
 	
 	//==================FACTORS====================
 	
-	public void visit(FactorTerm factorTerm) {
-//		if (negativeExpressionDepth > 0) {
-//			ArrayTermVisitor atv = new ArrayTermVisitor();
-//			factorTerm.traverseTopDown(atv);
-//
-//			if (!atv.hasArrayReference) {
-//				Code.put(Code.neg);
-//			}
-//			--negativeExpressionDepth;
-		//}
-	}
-	
-	public void visit(MinusSign minusSign) {
-		++negativeExpressionDepth;
-	}
-
-	
-	public void visit(FuncCall funcCall) {
-		Obj functionObj = funcCall.getFuncName().getDesignator().obj;
-		int offset = 0;
-		if ("ord".equals(functionObj.getName()) || "chr".equals(functionObj.getName()))
-			offset = 0 - Code.pc;
-		else if ("len".equals(functionObj.getName())) {
-			offset = 6 - Code.pc;
-		}
-		else
-			offset = functionObj.getAdr() - Code.pc;
-		Code.put(Code.call);
-		Code.put2(offset);
-	}
-	
-	public void visit(NumConstFact numConstFact) {
-		Obj con = Tab.insert(Obj.Con, "$", numConstFact.struct);
-		con.setLevel(0);
-		con.setAdr(numConstFact.getN1());
-		
-		Code.load(con);
-	}
-	
-	public void visit(NewExprFact newExprFact) {
+	private boolean isNewArrayStatement = false;
+	public void visit(NewArrayExpr newArrayExpr) {
 		Code.put(Code.newarray);
-		if (newExprFact.getType().struct.getElemType() == Tab.charType) {
+		if (newArrayExpr.getType().struct.getElemType() == Tab.charType) {
 			Code.put(0);
 		}
 		else {
 			Code.put(1);
 		}
 		
-
+		isNewArrayStatement = true;
+		initListCodeBuffer = new LinkedList<Integer>();
 	}
 	
+	public void visit(NewExprFact newExprFact) {
+		isNewArrayStatement = false;
+	}
+	public void visit(NewExprFactInit newExprFactInit) {
+		isNewArrayStatement = false;
+	}	
+
+	public void visit(FuncCall funcCall) {
+		if (!isNewArrayStatement) {
+			Obj functionObj = funcCall.getFuncName().getDesignator().obj;
+			int offset = 0;
+			if ("ord".equals(functionObj.getName()) || "chr".equals(functionObj.getName()))
+				offset = 0 - Code.pc;
+			else if ("len".equals(functionObj.getName())) {
+				offset = 6 - Code.pc;
+			}
+			else
+				offset = functionObj.getAdr() - Code.pc;
+			Code.put(Code.call);
+			Code.put2(offset);
+		}
+	}
+	
+	public void visit(NumConstFact numConstFact) {
+		if (!isNewArrayStatement) {
+			Obj con = Tab.insert(Obj.Con, "$", numConstFact.struct);
+			con.setLevel(0);
+			con.setAdr(numConstFact.getN1());
+			
+			Code.load(con);
+		}
+	}
+	
+
+	
 	public void visit(CharConstFact charConstFact) {
-		Obj con = Tab.insert(Obj.Con, "$", charConstFact.struct);
-		con.setLevel(0);
-		con.setAdr(charConstFact.getC1().charAt(1));
-		Code.load(con);
+		if (!isNewArrayStatement) {
+			Obj con = Tab.insert(Obj.Con, "$", charConstFact.struct);
+			con.setLevel(0);
+			con.setAdr(charConstFact.getC1().charAt(1));
+			Code.load(con);
+		}
 	}
 
 	public void visit(BoolConstFact boolConstFact) {
-		Obj con = Tab.insert(Obj.Con, "$", boolConstFact.struct);
-		con.setLevel(0);
-		if (TRUE.equals(boolConstFact.getB1())) {
-			con.setAdr(1);
+		if (!isNewArrayStatement) {
+			Obj con = Tab.insert(Obj.Con, "$", boolConstFact.struct);
+			con.setLevel(0);
+			if (TRUE.equals(boolConstFact.getB1())) {
+				con.setAdr(1);
+			}
+			else {
+				con.setAdr(0);
+			}
+			Code.load(con);
 		}
-		else {
-			con.setAdr(0);
-		}
-		Code.load(con);
 	}
 
 	
@@ -543,7 +553,7 @@ public class CodeGenerator extends VisitorAdaptor {
 		currentIfContext = ifContexts.pop();
 	}
 	
-	public void visit(IfCondition ifCondition) {
+	public void visit(IfCond ifCondition) {
 		parsingIfCondition = false;
 		
 		Code.putJump(0);

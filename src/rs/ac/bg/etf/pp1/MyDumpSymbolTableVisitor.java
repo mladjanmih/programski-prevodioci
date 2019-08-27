@@ -20,6 +20,10 @@ public class MyDumpSymbolTableVisitor extends SymbolTableVisitor {
 			currentIndent.setLength(currentIndent.length()-indent.length());
 	}
 	
+	public void visitObjNodeSemantic(Obj objToVisit) {
+		output = new StringBuilder();
+		visitObjNode(objToVisit);
+	}
 	
 	/* (non-Javadoc)
 	 * @see rs.etf.pp1.symboltable.test.SymbolTableVisitor#visitObjNode(symboltable.Obj)

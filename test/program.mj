@@ -8,7 +8,17 @@ program MJProgram
 	int niz[];
 {	
 
+	int increment(int x, int num) {
+		if (num > 0) {
+			x = increment(x, num-1);
+			x++;
+		}
+		
+		return x;
+	}
+
 	char enumBrojToChar(Broj broj) { 
+		
 		if (broj == Broj.JEDAN) {
 			return '1';
 		}
@@ -77,10 +87,21 @@ program MJProgram
 		Broj brojevi[]; 
 		int n, i;
 		int m4; 
+		Boja boje[];
+		char string[];
 	{
+		boje = new int[4] { Boja.CRNA, Boja.BELA, increment(boje[0], 4), increment(boje[1], 5)};
+		for (i = 0; i < Broj.CETIRI; i = i + 1) 
+			print(boje[i]);
+		
+		print(eol);
+		string = new char[13] { 'P', 'r', 'o', 'j', 'e', 'k', 'a', 't', ' ' , 'P', 'P', '1', eol };
+		for(i = 0; i < 13; i++)
+			print(string[i]);
+
 		m4 = -cet;
 		n = 5;
-		brojevi = new Broj[n];
+		brojevi = new Broj[7];
 		initBrojevi(brojevi);
 		for (i = 0; i < n; i++) {
 			l = enumBrojToChar(brojevi[i]);

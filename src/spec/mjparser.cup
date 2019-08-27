@@ -65,9 +65,9 @@ nonterminal DeclarationList, Declaration, ListVarDeclTypeList, VarDeclTypeList, 
 nonterminal ConstDeclList, EnumDeclList, VarDecl, EnumDecl, ConstDecl, StatementList, FormalParamList, FormPars, FormalParamDecl;
  
 nonterminal InnerStatementList, ForStatement, ForDesignatorStatement, ForCondition, Relop, AfterForDesignatorStatement, BreakStatement, ContinueStatement;
-nonterminal Matched, Unmatched, IfStatement, ElseStatement, IfCondition;
+nonterminal Matched, Unmatched, IfStatement, ElseStatement, IfCondition, NewArrayExpression, InitializerListStart;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedTerm, Expr, Term, Factor, AssignmentExpression, Condition, CondTerm, CondFact;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedTerm, Expr, Term, Factor, Condition, CondTerm, CondFact, InitializerList;
 
 precedence left ELSE;
 Program ::= (Program) PROG ProgName:p DeclarationLists LBRACE MethodDeclList RBRACE;
@@ -157,6 +157,8 @@ FormalParamList ::= (FormalParamDecls) FormalParamList COMMA FormalParamDecl
 FormalParamDecl ::= (ParamDecl) Type:type IDENT:name
 					|
 					(ArrayParamDecl) Type:type IDENT:name LBRACKET RBRACKET
+					|
+					(FormalParamDeclError) error:l {: parser.report_error("Izvrsen oporavak u liniji " + lleft , null );  :}	
 					;
 					
 ConstDecl ::= (NumConstDecl) IDENT:constName EQUAL NUMBER
@@ -180,18 +182,22 @@ Statement ::= (MatchedStmt) Matched
 		   (UnmatchedStmt) Unmatched
 		   ; 
 
+
 Unmatched ::= (UnmatchedIf) IfStatement LPAREN IfCondition RPAREN Statement
 		 	|
 		 	(UnmatchedIfElse) IfStatement LPAREN IfCondition RPAREN Matched ElseStatement Unmatched
 		 	|
 		 	(MatchedIfElse) IfStatement LPAREN IfCondition RPAREN Matched ElseStatement Matched
 		 	;
-		 	
 IfStatement ::= (If) IF;
 ElseStatement::= (Else) ELSE;
-IfCondition ::= (IfCondition) Condition;
+IfCondition ::= (IfCond) Condition
+				|
+				(IfConditionError) error:l {: parser.report_error("Izvrsen oporavak u liniji " + lleft , null );  :}	
+				;
 
-Matched ::= (DesignatorStmt) DesignatorStatement SEMI
+Matched ::= 
+			(DesignatorStmt) DesignatorStatement SEMI
 			| 
 			(AssignmentExprError) error SEMI:l
 			{: parser.report_error("Izvrsen oporavak u liniji " + lleft , null );  :}	
@@ -213,8 +219,7 @@ Matched ::= (DesignatorStmt) DesignatorStatement SEMI
 			(BreakStmt) BreakStatement SEMI
 			|
 			(ContinueStmt) ContinueStatement SEMI
-			;
-			
+			;		
 ReturnStatement ::= (ReturnStatement) RETURN;
 BreakStatement ::= (BreakStatement) BREAK;
 ContinueStatement ::= (ContinueStatement) CONTINUE;
@@ -253,20 +258,15 @@ CondFact ::= (RelopExpr) CondFact Relop Expr
 			 ;
 			 
 
-AssignmentExpression ::= (AssignmentExpr) Expr:e;
-						
 		   		
-DesignatorStatement ::=(Assignment) Designator:dest EQUAL AssignmentExpression:e 
+DesignatorStatement ::=(Assignment) Designator:dest EQUAL Expr:e 
 					|
-
 					(Increment) Designator:dest INC
 					|
 					(Decrement) Designator:dest DEC
 					|
 					(ProcCall) FuncName:name LPAREN ActualPars RPAREN
 					;
-
-MinusSign ::= (MinusSign) MINUS;
 
 Expr ::= (AddopExpr) Expr:e Addop Term:t
 			|
@@ -299,13 +299,21 @@ Factor ::= (NumConstFact) NUMBER
 			|
 			(NewFact) NEW Type
 			|
-			(NewExprFact) NEW Type LBRACKET Expr RBRACKET
+			(NewExprFact) NewArrayExpression
+			|
+			(NewExprFactInit) NewArrayExpression InitializerListStart InitializerList RBRACE
 			|
 			(Var) Designator:d
 			|
 			(FuncCall) FuncName:name LPAREN ActualPars RPAREN 
 			;
-			
+InitializerListStart ::= (InitListStart) LBRACE;
+NewArrayExpression ::= (NewArrayExpr) NEW Type LBRACKET Expr RBRACKET;	
+InitializerList ::= (InitList) InitializerList COMMA Expr
+					|
+					(Initializer) Expr
+					;
+					
 ActualPars ::= (Actuals) ActualParamList
 			|
 			(NoActuals) /* epsilon */

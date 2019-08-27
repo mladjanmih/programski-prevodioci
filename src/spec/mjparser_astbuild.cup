@@ -99,8 +99,10 @@ nonterminal Unmatched Unmatched;
 nonterminal IfStatement IfStatement;
 nonterminal ElseStatement ElseStatement;
 nonterminal IfCondition IfCondition;
+nonterminal NewArrayExpression NewArrayExpression;
+nonterminal InitializerListStart InitializerListStart;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedTerm, Expr, Term, Factor, AssignmentExpression, Condition, CondTerm, CondFact;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedTerm, Expr, Term, Factor, Condition, CondTerm, CondFact, InitializerList;
 
 precedence left ELSE;
 Program ::= (Program) PROG ProgName:p DeclarationLists:D1 LBRACE MethodDeclList:M2 RBRACE {: RESULT=new Program(p, D1, M2); RESULT.setLine(pleft); :};
@@ -190,6 +192,8 @@ FormalParamList ::= (FormalParamDecls) FormalParamList:F1 COMMA FormalParamDecl:
 FormalParamDecl ::= (ParamDecl) Type:type IDENT:name {: RESULT=new ParamDecl(type, name); RESULT.setLine(typeleft); :}
 					|
 					(ArrayParamDecl) Type:type IDENT:name LBRACKET RBRACKET {: RESULT=new ArrayParamDecl(type, name); RESULT.setLine(typeleft); :}
+					|
+					(FormalParamDeclError) error:l {: parser.report_error("Izvrsen oporavak u liniji " + lleft , null );  :} {: RESULT=new FormalParamDeclError(); :}	
 					;
 					
 ConstDecl ::= (NumConstDecl) IDENT:constName EQUAL NUMBER:N1 {: RESULT=new NumConstDecl(constName, N1); RESULT.setLine(constNameleft); :}
@@ -213,18 +217,22 @@ Statement ::= (MatchedStmt) Matched:M1 {: RESULT=new MatchedStmt(M1); RESULT.set
 		   (UnmatchedStmt) Unmatched:U1 {: RESULT=new UnmatchedStmt(U1); RESULT.setLine(U1left); :}
 		   ; 
 
+
 Unmatched ::= (UnmatchedIf) IfStatement:I1 LPAREN IfCondition:I2 RPAREN Statement:S3 {: RESULT=new UnmatchedIf(I1, I2, S3); RESULT.setLine(I1left); :}
 		 	|
 		 	(UnmatchedIfElse) IfStatement:I1 LPAREN IfCondition:I2 RPAREN Matched:M3 ElseStatement:E4 Unmatched:U5 {: RESULT=new UnmatchedIfElse(I1, I2, M3, E4, U5); RESULT.setLine(I1left); :}
 		 	|
 		 	(MatchedIfElse) IfStatement:I1 LPAREN IfCondition:I2 RPAREN Matched:M3 ElseStatement:E4 Matched:M5 {: RESULT=new MatchedIfElse(I1, I2, M3, E4, M5); RESULT.setLine(I1left); :}
 		 	;
-		 	
 IfStatement ::= (If) IF {: RESULT=new If(); :};
 ElseStatement::= (Else) ELSE {: RESULT=new Else(); :};
-IfCondition ::= (IfCondition) Condition:C1 {: RESULT=new IfCondition(C1); RESULT.setLine(C1left); :};
+IfCondition ::= (IfCond) Condition:C1 {: RESULT=new IfCond(C1); RESULT.setLine(C1left); :}
+				|
+				(IfConditionError) error:l {: parser.report_error("Izvrsen oporavak u liniji " + lleft , null );  :} {: RESULT=new IfConditionError(); :}	
+				;
 
-Matched ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new DesignatorStmt(D1); RESULT.setLine(D1left); :}
+Matched ::= 
+			(DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new DesignatorStmt(D1); RESULT.setLine(D1left); :}
 			| 
 			(AssignmentExprError) error SEMI:l
 			{: parser.report_error("Izvrsen oporavak u liniji " + lleft , null );  :} {: RESULT=new AssignmentExprError(); :}	
@@ -246,8 +254,7 @@ Matched ::= (DesignatorStmt) DesignatorStatement:D1 SEMI {: RESULT=new Designato
 			(BreakStmt) BreakStatement:B1 SEMI {: RESULT=new BreakStmt(B1); RESULT.setLine(B1left); :}
 			|
 			(ContinueStmt) ContinueStatement:C1 SEMI {: RESULT=new ContinueStmt(C1); RESULT.setLine(C1left); :}
-			;
-			
+			;		
 ReturnStatement ::= (ReturnStatement) RETURN {: RESULT=new ReturnStatement(); :};
 BreakStatement ::= (BreakStatement) BREAK {: RESULT=new BreakStatement(); :};
 ContinueStatement ::= (ContinueStatement) CONTINUE {: RESULT=new ContinueStatement(); :};
@@ -286,20 +293,15 @@ CondFact ::= (RelopExpr) CondFact:C1 Relop:R2 Expr:E3 {: RESULT=new RelopExpr(C1
 			 ;
 			 
 
-AssignmentExpression ::= (AssignmentExpr) Expr:e {: RESULT=new AssignmentExpr(e); RESULT.setLine(eleft); :};
-						
 		   		
-DesignatorStatement ::=(Assignment) Designator:dest EQUAL AssignmentExpression:e {: RESULT=new Assignment(dest, e); RESULT.setLine(destleft); :} 
+DesignatorStatement ::=(Assignment) Designator:dest EQUAL Expr:e {: RESULT=new Assignment(dest, e); RESULT.setLine(destleft); :} 
 					|
-
 					(Increment) Designator:dest INC {: RESULT=new Increment(dest); RESULT.setLine(destleft); :}
 					|
 					(Decrement) Designator:dest DEC {: RESULT=new Decrement(dest); RESULT.setLine(destleft); :}
 					|
 					(ProcCall) FuncName:name LPAREN ActualPars:A1 RPAREN {: RESULT=new ProcCall(name, A1); RESULT.setLine(nameleft); :}
 					;
-
-MinusSign ::= (MinusSign) MINUS {: RESULT=new MinusSign(); :};
 
 Expr ::= (AddopExpr) Expr:e Addop:A1 Term:t {: RESULT=new AddopExpr(e, A1, t); RESULT.setLine(eleft); :}
 			|
@@ -332,13 +334,21 @@ Factor ::= (NumConstFact) NUMBER:N1 {: RESULT=new NumConstFact(N1); RESULT.setLi
 			|
 			(NewFact) NEW Type:T1 {: RESULT=new NewFact(T1); RESULT.setLine(T1left); :}
 			|
-			(NewExprFact) NEW Type:T1 LBRACKET Expr:E2 RBRACKET {: RESULT=new NewExprFact(T1, E2); RESULT.setLine(T1left); :}
+			(NewExprFact) NewArrayExpression:N1 {: RESULT=new NewExprFact(N1); RESULT.setLine(N1left); :}
+			|
+			(NewExprFactInit) NewArrayExpression:N1 InitializerListStart:I2 InitializerList:I3 RBRACE {: RESULT=new NewExprFactInit(N1, I2, I3); RESULT.setLine(N1left); :}
 			|
 			(Var) Designator:d {: RESULT=new Var(d); RESULT.setLine(dleft); :}
 			|
 			(FuncCall) FuncName:name LPAREN ActualPars:A1 RPAREN {: RESULT=new FuncCall(name, A1); RESULT.setLine(nameleft); :} 
 			;
-			
+InitializerListStart ::= (InitListStart) LBRACE {: RESULT=new InitListStart(); :};
+NewArrayExpression ::= (NewArrayExpr) NEW Type:T1 LBRACKET Expr:E2 RBRACKET {: RESULT=new NewArrayExpr(T1, E2); RESULT.setLine(T1left); :};	
+InitializerList ::= (InitList) InitializerList:I1 COMMA Expr:E2 {: RESULT=new InitList(I1, E2); RESULT.setLine(I1left); :}
+					|
+					(Initializer) Expr:E1 {: RESULT=new Initializer(E1); RESULT.setLine(E1left); :}
+					;
+					
 ActualPars ::= (Actuals) ActualParamList:A1 {: RESULT=new Actuals(A1); RESULT.setLine(A1left); :}
 			|
 			(NoActuals) {: RESULT=new NoActuals(); :} /* epsilon */
