@@ -5,6 +5,7 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
+import rs.ac.bg.etf.pp1.AssignmentVisitor.ArrayTermVisitor;
 import rs.ac.bg.etf.pp1.AssignmentVisitor.NewArrayExprVisitor;
 import rs.ac.bg.etf.pp1.CounterVisitor.FormParamCounter;
 import rs.ac.bg.etf.pp1.CounterVisitor.VarCounter;
@@ -242,14 +243,24 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	public void visit(Decrement decrement) {
-		Code.loadConst(1);
-		Code.put(Code.sub);
-		Code.store(decrement.getDesignator().obj);
+		if (decrement.getDesignator().obj.getName().endsWith("[]")) {
+			--Code.pc;
+			Code.put(Code.dup2);
+			Code.put(Code.aload);
+			Code.loadConst(1);
+			Code.put(Code.sub);
+			Code.put(Code.astore);
+		}
+		else {
+			Code.loadConst(1);
+			Code.put(Code.sub);
+			Code.store(decrement.getDesignator().obj);
+		}
 	}
 	
 	//==================EXPR=====================
-	public void visit(NegExpr negExpr) {
-//		Code.put(Code.neg);
+	public void visit(MinusTerm minusTerm) {
+		Code.put(Code.neg);
 	}
 	
 	
@@ -300,10 +311,15 @@ public class CodeGenerator extends VisitorAdaptor {
 	//==================FACTORS====================
 	
 	public void visit(FactorTerm factorTerm) {
-		if (negativeExpressionDepth > 0) {
-			Code.put(Code.neg);
-			--negativeExpressionDepth;
-		}
+//		if (negativeExpressionDepth > 0) {
+//			ArrayTermVisitor atv = new ArrayTermVisitor();
+//			factorTerm.traverseTopDown(atv);
+//
+//			if (!atv.hasArrayReference) {
+//				Code.put(Code.neg);
+//			}
+//			--negativeExpressionDepth;
+		//}
 	}
 	
 	public void visit(MinusSign minusSign) {
@@ -368,15 +384,13 @@ public class CodeGenerator extends VisitorAdaptor {
 	//================IF AND FOR====================
 	Stack<ForContext> forContexts = new Stack<ForContext>();
 	ForContext currentForContext = new ForContext();
+	boolean parsingForCondition = false;
 	
-	public void visit(ForDesignatorStmt forDesignatorStmt) {
-		currentForContext.conditionStatementAddress = Code.pc;
-	}
+	Stack<ForContext> ifContexts = new Stack<ForContext>();
+	ForContext currentIfContext = new ForContext();
+	boolean parsingIfCondition = false;
 	
-	public void visit(NoForDesignatorStmt noForDesignatorStmt) {
-		currentForContext.conditionStatementAddress = Code.pc;
-	}
-	
+
 	public void visit(SingleExpr singleExpr) {
 		
 	}
@@ -403,14 +417,22 @@ public class CodeGenerator extends VisitorAdaptor {
 			Code.putFalseJump(Code.le, 0);
 		}
 		
-		currentForContext.conditionBackPatchAdresses.add(Code.pc - 2);
+		if (parsingForCondition)
+			currentForContext.conditionBackPatchAdresses.add(Code.pc - 2);
+		else
+			currentIfContext.conditionBackPatchAdresses.add(Code.pc - 2);
 	}
 	
 	public void visit(AndCondition andCondition) {
 		if (andCondition.getCondFact().getClass() == SingleExpr.class) {
 			Code.loadConst(1);
 			Code.putFalseJump(Code.eq, 0);
-			currentForContext.conditionBackPatchAdresses.add(Code.pc - 2);
+			if (parsingForCondition){
+				currentForContext.conditionBackPatchAdresses.add(Code.pc - 2);
+			}
+			else {
+				currentIfContext.conditionBackPatchAdresses.add(Code.pc - 2);
+			}
 		}
 	}
 	
@@ -418,109 +440,141 @@ public class CodeGenerator extends VisitorAdaptor {
 		if (singleCondFact.getCondFact().getClass() == SingleExpr.class) {
 			Code.loadConst(1);
 			Code.putFalseJump(Code.eq, 0);
-			currentForContext.conditionBackPatchAdresses.add(Code.pc - 2);
+			if (parsingForCondition){
+				currentForContext.conditionBackPatchAdresses.add(Code.pc - 2);
+			}
+			else {
+				currentIfContext.conditionBackPatchAdresses.add(Code.pc - 2);
+			}
 		}
 	}
 	
 	public void visit(SingleCondTerm singleCondTerm)  {
 		Code.putJump(0);
-		currentForContext.trueConditionBackPatchAdresses.add(Code.pc - 2);
-		for (Integer i: currentForContext.conditionBackPatchAdresses) {
-			Code.fixup(i);
+		if (parsingForCondition) {
+			currentForContext.trueConditionBackPatchAdresses.add(Code.pc - 2);
+			for (Integer i: currentForContext.conditionBackPatchAdresses) {
+				Code.fixup(i);
+			}
+			
+			currentForContext.conditionBackPatchAdresses = new LinkedList<Integer>();
 		}
-		
-		currentForContext.conditionBackPatchAdresses = new LinkedList<Integer>();
+		else {
+			currentIfContext.trueConditionBackPatchAdresses.add(Code.pc - 2);
+			for (Integer i: currentIfContext.conditionBackPatchAdresses) {
+				Code.fixup(i);
+			}
+			
+			currentIfContext.conditionBackPatchAdresses = new LinkedList<Integer>();
+		}
 	}
 	
 	public void visit(OrCondition orCondition) {
 		Code.putJump(0);
-		currentForContext.trueConditionBackPatchAdresses.add(Code.pc - 2);
-		for (Integer i: currentForContext.conditionBackPatchAdresses) {
-			Code.fixup(i);
+		if (parsingForCondition) {
+			currentForContext.trueConditionBackPatchAdresses.add(Code.pc - 2);
+			for (Integer i: currentForContext.conditionBackPatchAdresses) {
+				Code.fixup(i);
+			}
+			currentForContext.conditionBackPatchAdresses = new LinkedList<Integer>();
+		}
+		else {
+			currentIfContext.trueConditionBackPatchAdresses.add(Code.pc - 2);
+			for (Integer i: currentIfContext.conditionBackPatchAdresses) {
+				Code.fixup(i);
+			}
+			currentIfContext.conditionBackPatchAdresses = new LinkedList<Integer>();
 		}
 		
-		currentForContext.conditionBackPatchAdresses = new LinkedList<Integer>();
+		
 	}
 	
 	//====IF======
 	public void visit(If _if) {
-		forContexts.push(currentForContext);
-		currentForContext = new ForContext();
- 	}
+		ifContexts.push(currentIfContext);
+		currentIfContext = new ForContext();
+		parsingIfCondition = true;
+	}
 	
 	public void visit(Else _else) {
 		Code.putJump(0);
-		currentForContext.ifElseStatementExitBackPatchAddresses.add(Code.pc - 2);
-		for(Integer i: currentForContext.falseConditionAdresses) {
+		currentIfContext.ifElseStatementExitBackPatchAddresses.add(Code.pc - 2);
+		for(Integer i: currentIfContext.falseConditionAdresses) {
 			Code.fixup(i);
 		}
 		
-		currentForContext.falseConditionAdresses = new LinkedList<Integer>();
+		currentIfContext.falseConditionAdresses = new LinkedList<Integer>();
 	}
 	
 	public void visit(UnmatchedIf unmatchedIf) {
-		for(Integer i: currentForContext.falseConditionAdresses) {
+		for(Integer i: currentIfContext.falseConditionAdresses) {
 			Code.fixup(i);
 		}
 		
-		currentForContext.falseConditionAdresses = new LinkedList<Integer>();	
+		currentIfContext.falseConditionAdresses = new LinkedList<Integer>();	
 		
-		if (currentForContext.ifElseStatementExitBackPatchAddresses.size() > 0)
-			for(Integer i: currentForContext.ifElseStatementExitBackPatchAddresses) {
+		if (currentIfContext.ifElseStatementExitBackPatchAddresses.size() > 0)
+			for(Integer i: currentIfContext.ifElseStatementExitBackPatchAddresses) {
 				Code.fixup(i);
 			}
 		
-		currentForContext.ifElseStatementExitBackPatchAddresses = new LinkedList<Integer>();
-		currentForContext = forContexts.pop();
+		currentIfContext.ifElseStatementExitBackPatchAddresses = new LinkedList<Integer>();
+		currentIfContext = ifContexts.pop();
 	}
 	
 	public void visit(UnmatchedIfElse unmatchedIfElse) {
 
-		if (currentForContext.ifElseStatementExitBackPatchAddresses.size() > 0)
-			for(Integer i: currentForContext.ifElseStatementExitBackPatchAddresses) {
+		if (currentIfContext.ifElseStatementExitBackPatchAddresses.size() > 0)
+			for(Integer i: currentIfContext.ifElseStatementExitBackPatchAddresses) {
 				Code.fixup(i);
 			}
 		
-		currentForContext.ifElseStatementExitBackPatchAddresses = new LinkedList<Integer>();
-		currentForContext = forContexts.pop();
+		currentIfContext.ifElseStatementExitBackPatchAddresses = new LinkedList<Integer>();
+		currentIfContext = ifContexts.pop();
 	}
 	
 	public void visit(MatchedIfElse matchedIfElse) {
-		if (currentForContext.ifElseStatementExitBackPatchAddresses.size() > 0)
-			for(Integer i: currentForContext.ifElseStatementExitBackPatchAddresses) {
+		if (currentIfContext.ifElseStatementExitBackPatchAddresses.size() > 0)
+			for(Integer i: currentIfContext.ifElseStatementExitBackPatchAddresses) {
 				Code.fixup(i);
 			}
 		
-		currentForContext.ifElseStatementExitBackPatchAddresses = new LinkedList<Integer>();
-		currentForContext = forContexts.pop();
+		currentIfContext.ifElseStatementExitBackPatchAddresses = new LinkedList<Integer>();
+		currentIfContext = ifContexts.pop();
 	}
 	
-//	public void visit(UnmatchedStmt unmatchedStmt) {
-//
-//	}
-	
 	public void visit(IfCondition ifCondition) {
-
+		parsingIfCondition = false;
 		
 		Code.putJump(0);
-		currentForContext.falseConditionAdresses.add(Code.pc - 2);
-		for(Integer i: currentForContext.trueConditionBackPatchAdresses) {
+		currentIfContext.falseConditionAdresses.add(Code.pc - 2);
+		for(Integer i: currentIfContext.trueConditionBackPatchAdresses) {
 			Code.fixup(i);
 		}
-		currentForContext.trueConditionBackPatchAdresses = new LinkedList<Integer>();
+		currentIfContext.trueConditionBackPatchAdresses = new LinkedList<Integer>();
 	}
 	
 	//====FOR=====
+	public void visit(ForDesignatorStmt forDesignatorStmt) {
+		currentForContext.conditionStatementAddress = Code.pc;
+	}
+	
+	public void visit(NoForDesignatorStmt noForDesignatorStmt) {
+		currentForContext.conditionStatementAddress = Code.pc;
+	}
+	
 	public void visit(ForCntd forCntd) {
 		Code.putJump(0);
 		currentForContext.falseConditionAdresses.add(Code.pc - 2);
 		currentForContext.afterForDesigStatementAddress = Code.pc;
+		parsingForCondition = false;
 	}
 	
 	public void visit(NoForCndt noForCndt) {
 		Code.putJump(0);
-		currentForContext.falseConditionAdresses.add(Code.pc - 2);
+		currentForContext.trueConditionBackPatchAdresses.add(Code.pc - 2);
 		currentForContext.afterForDesigStatementAddress = Code.pc;
+		parsingForCondition = false;
 	}
 	
 	public void visit(AfterForDesignatorStmt afterForDesignatorStmt) {
@@ -542,11 +596,13 @@ public class CodeGenerator extends VisitorAdaptor {
 		for(Integer i: currentForContext.falseConditionAdresses)
 			Code.fixup(i);
 		currentForContext = forContexts.pop();
+		
 	}
 	
 	public void visit(For _for) {
 		forContexts.push(currentForContext);
 		currentForContext = new ForContext();
+		parsingForCondition = true;
 	}
 	
 	public void visit(BreakStmt breakStmt) {

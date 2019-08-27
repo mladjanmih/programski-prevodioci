@@ -3,18 +3,13 @@ program MJProgram
 	const bool  falseConst = false, trueConst = true;
 	bool z;
 	const char a = '4', b = 'a', c = '-';
-	enum Proba { JEDAN = 6, DVA };
-	enum Proba2 { TRI };
+	enum Broj { JEDAN = 1, DVA , SEST = 6, SEDAM};
+	enum Boje { CRNA, BELA, PLAVA }
 	int niz[];
-	int niz2[];
 {	
-	int k(int g, int j) 
-		int c; 
-		char r;
+	int sum(int g, int j) 
 	{
-	//	c = 2;
-	//	r = 'a';
-		return Proba2.TRI;
+		return g + j;
 	}
 	
 	
@@ -22,24 +17,23 @@ program MJProgram
 		return true;
 	}
 	
-	void main() {
-		print(1);
-	//	x = 33;
-	//	niz = new int[Proba.JEDAN];
-	//	x = 5 + (6 * 6) % Proba.DVA + Proba2.TRI;
-	//	z = trueConst;
-	//	z = falseConst;
-	//	print(Proba.DVA);		
-	//	x = k(Proba2.TRI, 2 + 6);
-		niz2 = niz + niz;
+	void main() char l; {
+		niz = new int[Proba.SEST];
+		x = 5 + (6 * 6) / Broj.DVA + Boja.PLAVA;
+		niz[Boja.BELA] = x;
+		print(niz[1]);
 
-		//falseConst++;
-		niz[7] = x;
-	//	niz['a'] = 5;
-		niz[4] = niz[9];
-	//	func();
-		//a = '5';
-	//	x = Proba.JEDAN;
+		z = trueConst;
+		z = falseConst;
+
+		print(Proba.DVA);		
+
+		x = sum(Broj.SEST, sum2 , BOJA.CRNA));
+		niz[4] = x;
+		print(niz[4]);
+		niz[3] = -niz[4];
+		z = func();
+		l = b; print(l); l = a; print(l); print(c);
 		return;
 	}
 }

@@ -100,7 +100,7 @@ nonterminal IfStatement IfStatement;
 nonterminal ElseStatement ElseStatement;
 nonterminal IfCondition IfCondition;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor, AssignmentExpression, Condition, CondTerm, CondFact;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedTerm, Expr, Term, Factor, AssignmentExpression, Condition, CondTerm, CondFact;
 
 precedence left ELSE;
 Program ::= (Program) PROG ProgName:p DeclarationLists:D1 LBRACE MethodDeclList:M2 RBRACE {: RESULT=new Program(p, D1, M2); RESULT.setLine(pleft); :};
@@ -301,15 +301,19 @@ DesignatorStatement ::=(Assignment) Designator:dest EQUAL AssignmentExpression:e
 
 MinusSign ::= (MinusSign) MINUS {: RESULT=new MinusSign(); :};
 
-Expr ::= (NegExpr) MinusSign:ms SignedExpr:e {: RESULT=new NegExpr(ms, e); RESULT.setLine(msleft); :}
+Expr ::= (AddopExpr) Expr:e Addop:A1 Term:t {: RESULT=new AddopExpr(e, A1, t); RESULT.setLine(eleft); :}
 			|
-			(PosExpr) SignedExpr:e {: RESULT=new PosExpr(e); RESULT.setLine(eleft); :}
+			(TermExpr) SignedTerm:e {: RESULT=new TermExpr(e); RESULT.setLine(eleft); :}
 			;
-				
-SignedExpr ::= (AddopExpr) SignedExpr:te Addop:A1 Term:t {: RESULT=new AddopExpr(te, A1, t); RESULT.setLine(teleft); :}
+SignedTerm::= (MinusTerm) MINUS Term:t {: RESULT=new MinusTerm(t); RESULT.setLine(tleft); :}
+			|
+			(PlusTerm) Term:t {: RESULT=new PlusTerm(t); RESULT.setLine(tleft); :}
+			;	
+	/*		
+SignedExpr ::= (AddopExpr) SignedExpr:te Addop Term:t
 		|
-		(TermExpr) Term:t {: RESULT=new TermExpr(t); RESULT.setLine(tleft); :}
-		;
+		(TermExpr) Term:t
+		;*/
 
 Term ::= (MulopTerm) Term:t Mulop:M1 Factor:f {: RESULT=new MulopTerm(t, M1, f); RESULT.setLine(tleft); :}
 		|

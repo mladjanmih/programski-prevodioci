@@ -67,7 +67,7 @@ nonterminal ConstDeclList, EnumDeclList, VarDecl, EnumDecl, ConstDecl, Statement
 nonterminal InnerStatementList, ForStatement, ForDesignatorStatement, ForCondition, Relop, AfterForDesignatorStatement, BreakStatement, ContinueStatement;
 nonterminal Matched, Unmatched, IfStatement, ElseStatement, IfCondition;
 nonterminal rs.etf.pp1.symboltable.concepts.Obj MethodDecl, MethodTypeName, Designator, Program, ProgName, EnumName, FuncName, DesignatorName;
-nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedExpr, Expr, Term, Factor, AssignmentExpression, Condition, CondTerm, CondFact;
+nonterminal rs.etf.pp1.symboltable.concepts.Struct Type, DesignatorStatement, SignedTerm, Expr, Term, Factor, AssignmentExpression, Condition, CondTerm, CondFact;
 
 precedence left ELSE;
 Program ::= (Program) PROG ProgName:p DeclarationLists LBRACE MethodDeclList RBRACE;
@@ -268,15 +268,19 @@ DesignatorStatement ::=(Assignment) Designator:dest EQUAL AssignmentExpression:e
 
 MinusSign ::= (MinusSign) MINUS;
 
-Expr ::= (NegExpr) MinusSign:ms SignedExpr:e
+Expr ::= (AddopExpr) Expr:e Addop Term:t
 			|
-			(PosExpr) SignedExpr:e
+			(TermExpr) SignedTerm:e
 			;
-				
+SignedTerm::= (MinusTerm) MINUS Term:t
+			|
+			(PlusTerm) Term:t
+			;	
+	/*		
 SignedExpr ::= (AddopExpr) SignedExpr:te Addop Term:t
 		|
 		(TermExpr) Term:t
-		;
+		;*/
 
 Term ::= (MulopTerm) Term:t Mulop Factor:f
 		|

@@ -49,6 +49,12 @@ public class AssignmentVisitor extends VisitorAdaptor {
 		}
 	}
 	
+	public static class ArrayTermVisitor extends AssignmentVisitor {
+		public void visit(ArrIdentDesign design) {
+			hasArrayReference = true;
+		}
+	}
+	
 	public static class ArrayUsageVisitor extends AssignmentVisitor {
 		public ArrayUsageVisitor() {
 			hasArrayReference = false;
