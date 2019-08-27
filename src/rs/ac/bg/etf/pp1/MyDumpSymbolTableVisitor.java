@@ -31,6 +31,10 @@ public class MyDumpSymbolTableVisitor extends SymbolTableVisitor {
 	@Override
 	public void visitObjNode(Obj objToVisit) {
 		//output.append("[");
+		if (objToVisit.getName().endsWith("[]")) {	
+			return;
+		}
+			
 		switch (objToVisit.getKind()) {
 		case Obj.Con:  output.append("Con "); break;
 		case Obj.Var:  output.append("Var "); break;
@@ -40,8 +44,6 @@ public class MyDumpSymbolTableVisitor extends SymbolTableVisitor {
 		case Obj.Prog: output.append("Prog "); break;
 		}
 		
-		if (objToVisit.getName().endsWith("[]"))
-			return;
 		
 		output.append(objToVisit.getName());
 		output.append(": ");
@@ -63,9 +65,11 @@ public class MyDumpSymbolTableVisitor extends SymbolTableVisitor {
 		
 
 		for (Obj o : objToVisit.getLocalSymbols()) {
-			output.append(currentIndent.toString());
-			o.accept(this);
-			output.append("\n");
+			if (!o.getName().endsWith("[]")) {
+				output.append(currentIndent.toString());
+				o.accept(this);
+				output.append("\n");
+			}
 		}
 		
 		if (objToVisit.getKind() == Obj.Prog || objToVisit.getKind() == Obj.Meth || objToVisit.getKind() == Obj.Type) 
@@ -82,7 +86,8 @@ public class MyDumpSymbolTableVisitor extends SymbolTableVisitor {
 	public void visitScopeNode(Scope scope) {
 		for (Obj o : scope.values()) {
 			o.accept(this);
-			output.append("\n");
+		//	if (!o.getName().endsWith("[]"))
+				output.append("\n");
 		}
 	}
 

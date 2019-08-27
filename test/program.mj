@@ -9,12 +9,7 @@ program MJProgram
 {	
 
 	int increment(int x, int num) {
-		if (num > 0) {
-			x = increment(x, num-1);
-			x++;
-		}
-		
-		return x;
+		return x + num;
 	}
 
 	char enumBrojToChar(Broj broj) { 
@@ -144,7 +139,8 @@ program MJProgram
 		niz[Boja.BELA] = x;
 		print(niz[1]);
 		print(Broj.DVA);		
-
+		
+		
 		x = sum(Broj.SEST, sum(2 , Boja.CRNA)); //x = 8
 		niz[4] = x;
 		print(niz[4]);

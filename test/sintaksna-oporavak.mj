@@ -1,25 +1,167 @@
-program sintaksnaOporavak
-	enum Broj { NULA, JEDAN, PET=5, DESET=10}
-
-	const int jedan = 1;
-	const int pet = 5;
-
-	int  re e, niz[], a, f f;
+program MJProgram
+	int  re e, intNiz[], a, f f;
 	char nizch[];
-	
-{
-	void printic() {
-		print(pet);
+	int x, y;
+	const bool  falseConst = false, trueConst = true;
+	const int cet = 4; 
+	bool z;
+	enum Broj { JEDAN = 1, DVA , TRI, CETIRI, PET, SEST = 6, SEDAM, OSAM, DEVET }
+	enum Boja { CRNA, BELA, PLAVA }
+	int niz[];
+{	
+
+	int increment(int x, int num) {
+		return x + num;
 	}
 
-	void main()	
-		int bodovi, dva;
-		Broj nula, jedana;
-		Broj pet[];
+	char enumBrojToChar(Broj broj) { 
+		
+		if (broj == Broj.JEDAN) {
+			return '1';
+		}
+		else if (broj == Broj.DVA) {
+			return '2';
+		}
+		else if (broj == Broj.TRI) {
+			return '3';
+		}
+		else if (broj == Broj.CETIRI) {
+			return '4';
+		}
+		else if (broj == Broj.PET) {
+			return '5';
+		}
+		else if (broj == Broj.SEST) {
+			return '6';
+		}
+		else if (broj == Broj.SEDAM) {
+			return '7';
+		}
+		else if (broj == Broj.OSAM) {
+			return '8';
+		}
+		else {
+			return '9';
+		}
+	}
+	
+	void initBrojevi(Broj b[]) {
+		b[0] = Broj.SEDAM;
+		b[1] = Broj.DVA;
+		b[2] = Broj.DEVET;
+		b[3] = Broj.SEST;
+		b[4] = Broj.TRI;
+	}
+	
+	int sum(int g, int j) 
 	{
-		niz = new int[5];
+		return g + j;
+	}
+	
+	void selectionSort(bool a a, int niz[], int n, bool desc) int i, j, p; {
+		if (n > 0 && niz != null) {
+			for (i = 0; i < n - 1; i++) 
+				for (j = i + 1; j < n; j++)
+					if (des c) {
+						if (niz[j] > niz[i]) {
+							p = niz[j];
+							niz[j] = niz[i];
+							niz[i] = p;
+						}
+					}
+					else {
+						if (niz[j] < niz[i]) {
+							p = niz[j];
+							niz[j] = niz[i];
+							niz[i] = p;
+						}
+					}
+		}
+	}
+	
+	void main() 
+		char l; 
+		Broj brojevi[]; 
+		int n, i;
+		int m4; 
+		int boje[];
+		char string[];
+	{
+		intNiz = new int[5];
 		a = 1;		
 		a = 2 3;
-		niz[a] = 1;
+		intNiz[a] = 1;
+		print(intNiz[1]);
+				
+		string = new char[13] { 'P', 'r', 'o', 'j', 'e', 'k', 'a', 't', ' ' , 'P', 'P', '1', eol };
+		for(i = 0; i < 13; i++)
+			print(string[i]);
+		
+		print(eol);
+		boje = new int[4] { Boja.CRNA, Boja.BELA, increment(boje[0], 4), increment(boje[1], 5)};
+		for (i = 0; i < Broj.CETIRI; i = i + 1) 
+			print(boje[i]);
+
+		print(eol);
+		m4 = -cet;
+		n = 5;
+		brojevi = new Broj[7];
+		initBrojevi(brojevi);
+		for (i = 0; i < n; i++) {
+			l = enumBrojToChar(brojevi[i]);
+			print(l);
+		}
+		
+		i = n -1;
+		print(eol);
+		for(;;) {
+			l = enumBrojToChar(brojevi[i]);
+			print(l);
+			i--;
+			if (i < 0) break;
+		}
+	
+	
+		niz = new int[Broj.SEDAM];
+		n = m4;
+		niz[0] = 80; niz[1] = 42; niz[2] = 4; niz[3]= m4; niz[-n] = -53; niz[5] = 12; niz[6] = 0;
+		print(eol);
+		for(i = 0; i < Broj.SEDAM; i++) 
+			print(niz[i]);
+			
+		print(eol);
+		selectionSort(niz, Broj.SEDAM, false);
+		
+		for(i = 0; i < Broj.SEDAM; i++) 
+			print(niz[i]);
+		
+		print(eol);
+		selectionSort(niz, Broj.SEDAM, true); 
+		for (i = 0; i < Broj.SEDAM; i++)
+			print(niz[i]);
+		
+		print(eol);
+		
+		x = 5 + (6 * 6) / Broj.DVA + Boja.PLAVA; //x = 25
+		niz[Boja.BELA] = x;
+		print(niz[1]);
+		print(Broj.DVA);		
+		
+		
+		x = sum(Broj.SEST, sum(2 , Boja.CRNA)); //x = 8
+		niz[4] = x;
+		print(niz[4]);
+		niz[3] = -niz[4]; // niz[3] = -8
+		print(niz[3]);
+		return;
 	}
 }
+
+//     [java]     1Projekat PP1
+//     [java]     0    1    4    6
+//     [java] 72963
+//     [java] 36927
+//     [java]    80   42    4   -4  -53   12    0
+//     [java]    80   42   12    4    0   -4  -53
+//     [java]    80   42   12    4    0   -4  -53
+//     [java]    25    2    8   -8
