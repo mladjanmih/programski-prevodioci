@@ -149,14 +149,16 @@ public class CodeGenerator extends VisitorAdaptor {
 	}
 	
 	public void visit(MulopTerm mulopTerm) {
-		if (MulMulop.class == mulopTerm.getMulop().getClass()) {
-			Code.put(Code.mul);
-		}
-		else if (DivMulop.class == mulopTerm.getMulop().getClass()) {
-			Code.put(Code.div);
-		}
-		else {
-			Code.put(Code.rem);
+		if (!isNewArrayStatement) {
+			if (MulMulop.class == mulopTerm.getMulop().getClass()) {
+				Code.put(Code.mul);
+			}
+			else if (DivMulop.class == mulopTerm.getMulop().getClass()) {
+				Code.put(Code.div);
+			}
+			else {
+				Code.put(Code.rem);
+			}
 		}
 	}
 	
@@ -264,16 +266,19 @@ public class CodeGenerator extends VisitorAdaptor {
 	
 	//==================EXPR=====================
 	public void visit(MinusTerm minusTerm) {
-		Code.put(Code.neg);
+		if (!isNewArrayStatement)
+			Code.put(Code.neg);
 	}
 	
 	
 	//================SIGNED EXPR=================
 	public void visit(AddopExpr addopExpr) {
-		if (PlusAddop.class == addopExpr.getAddop().getClass())
-			Code.put(Code.add);
-		else 
-			Code.put(Code.sub);
+		if (!isNewArrayStatement) {
+			if (PlusAddop.class == addopExpr.getAddop().getClass())
+				Code.put(Code.add);
+			else 
+				Code.put(Code.sub);
+		}
 	}
 	
 	

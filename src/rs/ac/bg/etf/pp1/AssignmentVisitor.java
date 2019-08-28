@@ -9,6 +9,7 @@ import rs.ac.bg.etf.pp1.ast.Assignment;
 import rs.ac.bg.etf.pp1.ast.BoolConstFact;
 import rs.ac.bg.etf.pp1.ast.CharConstFact;
 import rs.ac.bg.etf.pp1.ast.DesignatorName;
+import rs.ac.bg.etf.pp1.ast.DivMulop;
 import rs.ac.bg.etf.pp1.ast.FactorTerm;
 import rs.ac.bg.etf.pp1.ast.FuncCall;
 import rs.ac.bg.etf.pp1.ast.IdentDesign;
@@ -17,12 +18,14 @@ import rs.ac.bg.etf.pp1.ast.InitListStart;
 import rs.ac.bg.etf.pp1.ast.Initializer;
 import rs.ac.bg.etf.pp1.ast.InitializerListStart;
 import rs.ac.bg.etf.pp1.ast.MinusTerm;
+import rs.ac.bg.etf.pp1.ast.MulMulop;
 import rs.ac.bg.etf.pp1.ast.MulopTerm;
 import rs.ac.bg.etf.pp1.ast.NewArrayExpr;
 import rs.ac.bg.etf.pp1.ast.NewExprFact;
 import rs.ac.bg.etf.pp1.ast.NewExprFactInit;
 import rs.ac.bg.etf.pp1.ast.NewFact;
 import rs.ac.bg.etf.pp1.ast.NumConstFact;
+import rs.ac.bg.etf.pp1.ast.PlusAddop;
 import rs.ac.bg.etf.pp1.ast.ProcCall;
 import rs.ac.bg.etf.pp1.ast.ReadStmt;
 import rs.ac.bg.etf.pp1.ast.SubIdendDesign;
@@ -352,6 +355,37 @@ public class AssignmentVisitor extends VisitorAdaptor {
 			prevPc = Code.pc;
 			Code.load(dest);
 			Code.loadConst(i++);
+		}
+		
+		//==================EXPR=====================
+		public void visit(MinusTerm minusTerm) {
+			if (!isNewArrayStatement)
+				Code.put(Code.neg);
+		}
+		
+		
+		//================SIGNED EXPR=================
+		public void visit(AddopExpr addopExpr) {
+			if (!isNewArrayStatement) {
+				if (PlusAddop.class == addopExpr.getAddop().getClass())
+					Code.put(Code.add);
+				else 
+					Code.put(Code.sub);
+			}
+		}
+		
+		public void visit(MulopTerm mulopTerm) {
+			if (!isNewArrayStatement) {
+				if (MulMulop.class == mulopTerm.getMulop().getClass()) {
+					Code.put(Code.mul);
+				}
+				else if (DivMulop.class == mulopTerm.getMulop().getClass()) {
+					Code.put(Code.div);
+				}
+				else {
+					Code.put(Code.rem);
+				}
+			}
 		}
 	}
 }
